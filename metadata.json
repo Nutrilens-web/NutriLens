@@ -1,0 +1,5 @@
+{
+  "name": "NutriLens",
+  "description": "AI Калоризатор (NutriLens) - PWA приложение для подсчета калорий по фото еды с помощью ИИ.",
+  "requestFramePermissions": ["camera"]
+}
