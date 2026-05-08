@@ -49,15 +49,15 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
 
       setImages((prev) => {
         const combined = [...prev, ...compressedImages];
-        if (combined.length > 4) {
+        if (combined.length > 10) {
           setTimeout(
             () =>
               setError(
-                "Загружено первые 4 фото (это максимум для одного блюда)",
+                "Загружено первые 10 фото (это максимум для одного блюда)",
               ),
             0,
           );
-          return combined.slice(0, 4);
+          return combined.slice(0, 10);
         }
         setTimeout(() => setError(null), 0);
         return combined;
