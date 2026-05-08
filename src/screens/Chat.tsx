@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Send, Loader2, Bot, Image as ImageIcon, X } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { compressImage } from '../utils/image';
 
 export function ChatScreen() {
@@ -129,7 +129,25 @@ export function ChatScreen() {
          model: 'gemini-2.5-flash',
          contents: fullHistory,
          config: {
-           systemInstruction: systemContext
+           systemInstruction: systemContext,
+           safetySettings: [
+             {
+               category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+           ],
          }
       });
 

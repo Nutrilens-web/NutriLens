@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, YAxis } from 'recharts';
 import { cn } from '../utils/cn';
 import { Bot, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 
 export function StatsScreen() {
   const { meals, settings, weights } = useStore();
@@ -83,7 +83,27 @@ export function StatsScreen() {
       
       const response = await ai.models.generateContent({
          model: 'gemini-2.5-flash',
-         contents: prompt
+         contents: prompt,
+         config: {
+           safetySettings: [
+             {
+               category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+             {
+               category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+               threshold: HarmBlockThreshold.BLOCK_NONE,
+             },
+           ],
+         }
       });
       setHealthScore(response.text || "Не смог сформировать оценку.");
     } catch (e) {

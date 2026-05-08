@@ -3,12 +3,11 @@ import { Dashboard } from './screens/Dashboard';
 import { AddMeal } from './screens/AddMeal';
 import { SettingsScreen } from './screens/Settings';
 import { StatsScreen } from './screens/Stats';
-import { RecommendationsScreen } from './screens/Recommendations';
-import { ChatScreen } from './screens/Chat';
-import { Camera, Settings as SettingsIcon, Home, BarChart3, Lightbulb, MessageCircle } from 'lucide-react';
+import { AssistantScreen } from './screens/Assistant';
+import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles } from 'lucide-react';
 import { cn } from './utils/cn';
 
-export type Screen = 'dashboard' | 'add' | 'settings' | 'stats' | 'recommendations' | 'chat';
+export type Screen = 'dashboard' | 'add' | 'settings' | 'stats' | 'assistant';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
@@ -31,46 +30,40 @@ export default function App() {
         {currentScreen === 'add' && <AddMeal onComplete={() => setCurrentScreen('dashboard')} />}
         {currentScreen === 'settings' && <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />}
         {currentScreen === 'stats' && <StatsScreen />}
-        {currentScreen === 'recommendations' && <RecommendationsScreen />}
-        {currentScreen === 'chat' && <ChatScreen />}
+        {currentScreen === 'assistant' && <AssistantScreen />}
       </main>
 
       {/* Bottom Navigation */}
       {currentScreen !== 'add' && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-          <button onClick={() => setCurrentScreen('dashboard')} className={cn("flex flex-col items-center gap-1 transition-colors w-12 mb-2", currentScreen === 'dashboard' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
+          <button onClick={() => setCurrentScreen('dashboard')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'dashboard' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <Home className="w-5 h-5" />
-            <span className="text-[8px] font-medium mt-0.5">Дневник</span>
+            <span className="text-[10px] font-medium mt-0.5">Дневник</span>
           </button>
           
-          <button onClick={() => setCurrentScreen('recommendations')} className={cn("flex flex-col items-center gap-1 transition-colors w-12 mb-2", currentScreen === 'recommendations' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
-            <Lightbulb className="w-5 h-5" />
-            <span className="text-[8px] font-medium mt-0.5">Идеи</span>
+          <button onClick={() => setCurrentScreen('stats')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'stats' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-[10px] font-medium mt-0.5">Отчет</span>
           </button>
 
           {/* Floating Action Button for Add positioned relative to the nav */}
-          <div className="relative -top-5 mx-1">
+          <div className="relative -top-5 mx-2">
             <button
               onClick={() => setCurrentScreen('add')}
-              className="bg-emerald-500 text-white p-3 rounded-full shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-95 transition-all"
+              className="bg-emerald-500 text-white p-3.5 rounded-full shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-95 transition-all"
             >
               <Camera className="w-6 h-6" />
             </button>
           </div>
 
-          <button onClick={() => setCurrentScreen('stats')} className={cn("flex flex-col items-center gap-1 transition-colors w-12 mb-2", currentScreen === 'stats' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-[8px] font-medium mt-0.5">Отчет</span>
+          <button onClick={() => setCurrentScreen('assistant')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'assistant' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-[10px] font-medium mt-0.5">Ассистент</span>
           </button>
 
-          <button onClick={() => setCurrentScreen('chat')} className={cn("flex flex-col items-center gap-1 transition-colors w-12 mb-2", currentScreen === 'chat' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-[8px] font-medium mt-0.5">Чат</span>
-          </button>
-
-          <button onClick={() => setCurrentScreen('settings')} className={cn("flex flex-col items-center gap-1 transition-colors w-12 mb-2", currentScreen === 'settings' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
+          <button onClick={() => setCurrentScreen('settings')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'settings' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <SettingsIcon className="w-5 h-5" />
-            <span className="text-[8px] font-medium mt-0.5">Настройки</span>
+            <span className="text-[10px] font-medium mt-0.5">Настройки</span>
           </button>
         </div>
       )}
