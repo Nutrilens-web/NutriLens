@@ -1,1 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#10B981"/><text x="50%" y="50%" font-family="sans-serif" font-size="128" fill="white" text-anchor="middle" dominant-baseline="middle">NL</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  
+  <g stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M 160 176 L 192 112 L 320 112 L 352 176" />
+    <rect x="80" y="176" width="352" height="240" rx="44" />
+    <circle cx="256" cy="296" r="76" />
+  </g>
+  
+  <!-- Листок, символизирующий питание/природу -->
+  <path d="M 284 242 C 304 172 380 172 380 242 C 380 312 304 312 284 242 Z" fill="#ffffff" />
+  
+  <!-- Вспышка камеры -->
+  <circle cx="144" cy="236" r="14" fill="#ffffff" />
+</svg>
