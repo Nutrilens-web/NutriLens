@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "prebuild": "pwa-assets-generator --preset minimal public/icon.svg",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
@@ -31,6 +32,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/uuid": "^10.0.0",
+    "@vite-pwa/assets-generator": "^1.0.2",
     "autoprefixer": "^10.4.21",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.14",

@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ['favicon.ico', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
+        includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon-180x180.png', 'pwa-64x64.png', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-icon-512x512.png'],
         manifest: {
           name: "NutriLens",
           short_name: "NutriLens",
@@ -21,6 +21,11 @@ export default defineConfig(({ mode }) => {
           background_color: "#F9FAFB",
           display: "standalone",
           icons: [
+            {
+              src: "pwa-64x64.png",
+              sizes: "64x64",
+              type: "image/png",
+            },
             {
               src: "pwa-192x192.png",
               sizes: "192x192",
@@ -32,7 +37,7 @@ export default defineConfig(({ mode }) => {
               type: "image/png",
             },
             {
-              src: "pwa-512x512.png",
+              src: "maskable-icon-512x512.png",
               sizes: "512x512",
               type: "image/png",
               purpose: "any maskable",
