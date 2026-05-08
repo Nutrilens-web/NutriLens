@@ -14,8 +14,13 @@ export function ChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollHeight,
@@ -124,7 +129,10 @@ export function ChatScreen() {
          model: 'gemini-2.5-flash',
          contents: fullHistory,
          config: {
-           systemInstruction: systemContext
+           systemInstruction: systemContext,
+           temperature: 0.1,
+           topP: 0.1,
+           topK: 1
          }
       });
 

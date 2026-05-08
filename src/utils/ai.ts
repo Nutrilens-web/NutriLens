@@ -57,6 +57,8 @@ export async function analyzeMealImage(
     config: {
       responseMimeType: "application/json",
       temperature: 0.0,
+      topP: 0.1,
+      topK: 1,
     },
   });
 
@@ -139,6 +141,8 @@ export async function getRecommendations(
     config: {
       responseMimeType: "application/json",
       temperature: 0.0,
+      topP: 0.1,
+      topK: 1,
     },
   });
 

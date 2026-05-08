@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",
+        includeAssets: ['favicon.ico', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           name: "NutriLens",
           short_name: "NutriLens",
@@ -38,6 +39,9 @@ export default defineConfig(({ mode }) => {
             },
           ],
         },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        }
       }),
     ],
     define: {
