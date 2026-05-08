@@ -37,7 +37,7 @@ export function ChatScreen() {
     
     try {
       const compressedImages = await Promise.all(
-        files.map(f => compressImage(f))
+        files.map(f => compressImage(f, 1536, 1536))
       );
       
       setSelectedImages(prev => {
@@ -129,10 +129,7 @@ export function ChatScreen() {
          model: 'gemini-2.5-flash',
          contents: fullHistory,
          config: {
-           systemInstruction: systemContext,
-           temperature: 0.1,
-           topP: 0.1,
-           topK: 1
+           systemInstruction: systemContext
          }
       });
 

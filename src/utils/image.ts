@@ -33,8 +33,8 @@ export function compressImage(file: File, maxWidth = 1024, maxHeight = 1024): Pr
 
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Compress to JPEG with 0.7 quality for faster uploads
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        // Compress to JPEG with 0.85 quality for text legibility
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         resolve(dataUrl);
       };
       img.onerror = (error) => reject(error);

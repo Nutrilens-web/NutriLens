@@ -42,9 +42,9 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     if (files.length === 0) return;
 
     try {
-      // Сжимаем фото сильнее (640x640) для быстрого анализа ИИ
+      // Оставляем фото в высоком разрешении (1536x1536) чтобы ИИ мог прочитать мелкий текст
       const compressedImages = await Promise.all(
-        files.map((f) => compressImage(f, 640, 640)),
+        files.map((f) => compressImage(f, 1536, 1536)),
       );
 
       setImages((prev) => {
