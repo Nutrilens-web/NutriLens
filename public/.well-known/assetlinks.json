@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.nutri_lens_mauve.twa",
+      "sha256_cert_fingerprints": ["70:93:F5:4D:27:3D:57:03:82:52:5C:93:E9:8C:D3:70:36:1A:D8:AC:7B:93:4F:1C:B7:0F:CF:24:89:26:F4:D4"]
+    }
+  }
+]
