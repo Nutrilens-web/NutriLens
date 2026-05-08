@@ -12,11 +12,16 @@ export function ChatScreen() {
   const [input, setInput] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isLoading]);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,7 +151,7 @@ export function ChatScreen() {
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30" ref={scrollContainerRef}>
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] rounded-[16px] px-4 py-2.5 text-sm ${m.role === 'user' ? 'bg-emerald-500 text-white rounded-br-none' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none shadow-sm'}`}>
@@ -168,7 +173,6 @@ export function ChatScreen() {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
       
       <div className="p-3 shrink-0 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.02)] flex flex-col gap-2 z-10 relative">
