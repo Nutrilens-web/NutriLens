@@ -19,6 +19,38 @@ export function ChatScreen() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    
+    const files = Array.from(e.target.files);
+    setIsLoading(true);
+    
+    try {
+      const compressedImages = await Promise.all(
+        files.map(f => compressImage(f))
+      );
+      
+      setSelectedImages(prev => {
+        const combined = [...prev, ...compressedImages];
+        if (combined.length > 10) {
+           return combined.slice(0, 10);
+        }
+        return combined;
+      });
+    } catch (err) {
+      console.error('Failed to compress images:', err);
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async () => {
     if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
     
