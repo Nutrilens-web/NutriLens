@@ -5,6 +5,7 @@ const SETTINGS_KEY = 'nutrilens_settings';
 const MEALS_KEY = 'nutrilens_meals';
 const FAVORITES_KEY = 'nutrilens_favorites';
 const WEIGHTS_KEY = 'nutrilens_weights';
+const GROCERY_KEY = 'nutrilens_grocery';
 
 const defaultSettings: Settings = {
   apiKey: '',
@@ -31,6 +32,11 @@ export function useStore() {
   const [weights, setWeightsState] = useState<WeightEntry[]>(() => {
     const saved = localStorage.getItem(WEIGHTS_KEY);
     return saved ? JSON.parse(saved) : [];
+  });
+
+  const [groceryData, setGroceryDataState] = useState<{ plan: string, categories: {category: string, items: string[]}[] } | null>(() => {
+    const saved = localStorage.getItem(GROCERY_KEY);
+    return saved ? JSON.parse(saved) : null;
   });
 
   const setSettings = useCallback((newSettings: Settings) => {
@@ -116,17 +122,28 @@ export function useStore() {
     });
   }, []);
 
+  const saveGroceryData = useCallback((data: { plan: string, categories: {category: string, items: string[]}[] } | null) => {
+    setGroceryDataState(data);
+    if (data) {
+        localStorage.setItem(GROCERY_KEY, JSON.stringify(data));
+    } else {
+        localStorage.removeItem(GROCERY_KEY);
+    }
+  }, []);
+
   return {
     settings,
     setSettings,
     meals,
     favorites,
     weights,
+    groceryData,
     addMeal,
     updateMeal,
     deleteMeal,
     addFavorite,
     removeFavorite,
     addWeight,
+    saveGroceryData,
   };
 }

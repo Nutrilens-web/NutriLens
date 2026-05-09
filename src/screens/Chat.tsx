@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { Send, Loader2, Bot, Image as ImageIcon, X } from 'lucide-react';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { compressImage } from '../utils/image';
+import Markdown from 'react-markdown';
 
 export function ChatScreen() {
   const { settings, meals } = useStore();
@@ -185,7 +186,13 @@ export function ChatScreen() {
                   ))}
                 </div>
               )}
-              {m.text}
+              {m.role === 'model' ? (
+                <div className="prose prose-sm max-w-none text-gray-800 prose-p:leading-snug prose-li:my-0 pb-1">
+                  <Markdown>{m.text}</Markdown>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">{m.text}</div>
+              )}
             </div>
           </div>
         ))}

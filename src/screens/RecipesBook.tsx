@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { generateRecipesByCategory, getDetailedRecipe } from '../utils/ai';
 import { Loader2, Book, Search, BookOpen, X } from 'lucide-react';
+import Markdown from 'react-markdown';
 
 export function RecipesBookScreen() {
   const { settings } = useStore();
@@ -110,7 +111,7 @@ export function RecipesBookScreen() {
                 </div>
               ) : (
                 <div className="prose prose-sm prose-emerald max-w-none text-sm text-gray-700 whitespace-pre-wrap">
-                  {detailedRecipe}
+                  <Markdown>{detailedRecipe}</Markdown>
                 </div>
               )}
             </div>

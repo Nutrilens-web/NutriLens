@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { generateGroceryList } from '../utils/ai';
-import { Loader2, ShoppingCart, Text, ArrowRight, Check } from 'lucide-react';
+import { Loader2, ShoppingCart, Trash2, CheckSquare, Square } from 'lucide-react';
+import Markdown from 'react-markdown';
 
 export function GroceryScreen() {
-  const { settings } = useStore();
+  const { settings, groceryData, saveGroceryData } = useStore();
   const [preferences, setPreferences] = useState('');
-  const [groceryList, setGroceryList] = useState<{category: string, items: string[]}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +19,12 @@ export function GroceryScreen() {
     setIsLoading(true);
     
     try {
-      const list = await generateGroceryList(settings.apiKey, settings.userContext, settings.dailyGoal, preferences);
-      setGroceryList(list);
+      const data = await generateGroceryList(settings.apiKey, settings.userContext, settings.dailyGoal, preferences);
+      if (data && data.categories) {
+        saveGroceryData(data);
+      } else {
+        throw new Error('Пустой ответ');
+      }
     } catch (err: any) {
       setError(err.message || 'Ошибка при генерации списка покупок');
     } finally {
@@ -28,8 +32,12 @@ export function GroceryScreen() {
     }
   };
 
+  const handleClear = () => {
+    saveGroceryData(null);
+  };
+
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-6 pb-6">
       <div className="bg-white rounded-[20px] p-5 shadow-sm space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1.5">Пожелания или примечания</label>
@@ -43,39 +51,63 @@ export function GroceryScreen() {
 
         {error && <div className="text-red-500 text-xs bg-red-50 p-3 rounded-[12px]">{error}</div>}
 
-        <button
-          onClick={handleGenerate}
-          disabled={isLoading}
-          className="w-full bg-emerald-500 text-white font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20"
-        >
-          {isLoading ? (
-            <><Loader2 className="w-5 h-5 animate-spin" /> Генерируем...</>
-          ) : (
-            <><ShoppingCart className="w-5 h-5" /> Создать список на неделю</>
+        <div className="flex gap-2">
+          <button
+            onClick={handleGenerate}
+            disabled={isLoading}
+            className="flex-1 bg-emerald-500 text-white font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20"
+          >
+            {isLoading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Генерируем...</>
+            ) : (
+              <><ShoppingCart className="w-5 h-5" /> Создать список на неделю</>
+            )}
+          </button>
+
+          {groceryData && (
+             <button
+              onClick={handleClear}
+              className="px-4 bg-red-50 text-red-500 font-medium rounded-[12px] hover:bg-red-100 transition-all flex items-center justify-center shadow-sm"
+             >
+               <Trash2 className="w-5 h-5" />
+             </button>
           )}
-        </button>
+        </div>
       </div>
 
-      {groceryList.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900 px-1 mt-6">Ваш список на неделю</h3>
-          <div className="space-y-3">
-            {groceryList.map((category, idx) => (
-              <div key={idx} className="bg-white rounded-[20px] p-4 shadow-sm">
-                <h4 className="font-medium text-emerald-600 mb-3 text-sm">{category.category}</h4>
-                <ul className="space-y-2">
-                  {category.items.map((item, i) => (
-                    <li key={i} className="flex flex-row items-start gap-2.5">
-                      <div className="mt-0.5 shrink-0 w-4 h-4 rounded border border-gray-300 flex items-center justify-center">
-                         {/* user can technically tap this but we are not persisting checkbox state currently for simplicity */}
-                      </div>
-                      <span className="text-sm text-gray-800">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+      {groceryData && (
+        <div className="space-y-6">
+          {groceryData.plan && (
+            <div className="bg-emerald-50 text-emerald-900 rounded-[20px] p-5 shadow-sm">
+              <h3 className="font-semibold mb-3">План питания</h3>
+              <div className="prose prose-sm prose-emerald max-w-none text-sm leading-relaxed whitespace-pre-wrap">
+                <Markdown>{groceryData.plan}</Markdown>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {groceryData.categories && groceryData.categories.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gray-900 px-1 mt-6">Список продуктов</h3>
+              <div className="space-y-3">
+                {groceryData.categories.map((category: any, idx: number) => (
+                  <div key={idx} className="bg-white rounded-[20px] p-4 shadow-sm">
+                    <h4 className="font-medium text-emerald-600 mb-3 text-sm">{category.category}</h4>
+                    <ul className="space-y-2">
+                      {category.items.map((item: string, i: number) => (
+                        <li key={i} className="flex flex-row items-start gap-2.5">
+                          <div className="mt-0.5 shrink-0 w-4 h-4 rounded border border-gray-300 flex items-center justify-center">
+                            {/* checkbox aesthetics */}
+                          </div>
+                          <span className="text-sm text-gray-800"><Markdown components={{ p: 'span' }}>{item}</Markdown></span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
