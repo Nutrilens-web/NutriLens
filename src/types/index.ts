@@ -34,3 +34,9 @@ export interface WeightEntry {
   date: string; // YYYY-MM-DD
   weight: number;
 }
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+  images?: string[];
+}

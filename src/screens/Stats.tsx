@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, YAxis } from 'recharts';
 import { cn } from '../utils/cn';
-import { Bot, Loader2 } from 'lucide-react';
+import { Bot, Loader2, AlertCircle } from 'lucide-react';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import Markdown from 'react-markdown';
 
 export function StatsScreen() {
   const { meals, settings, weights } = useStore();
@@ -67,7 +68,7 @@ export function StatsScreen() {
 
   const handleHealthAnalysis = async () => {
     if (!settings.apiKey) {
-      alert("Добавьте API ключ в настройках");
+      setHealthScore("Сначала укажите API ключ в настройках");
       return;
     }
     setHealthLoading(true);
@@ -248,8 +249,8 @@ export function StatsScreen() {
         </h3>
         
         {healthScore ? (
-          <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-[12px] p-4">
-             {healthScore}
+          <div className="text-sm text-gray-700 bg-gray-50 rounded-[12px] p-4 prose prose-sm prose-emerald max-w-none">
+             <Markdown>{healthScore}</Markdown>
           </div>
         ) : (
           <button 

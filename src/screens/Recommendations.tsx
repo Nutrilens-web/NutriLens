@@ -102,36 +102,47 @@ export function RecommendationsScreen() {
   };
 
   return (
-    <div className="space-y-5 pb-6">
-      <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+    <div className="space-y-4 pb-6">
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-yellow-500" />
           Идеи для еды
         </h2>
       </div>
 
-      <div className="bg-white rounded-[20px] p-5 shadow-sm space-y-4">
+      <div className="bg-white rounded-[16px] p-4 shadow-sm space-y-4">
         <div>
-          <h3 className="text-sm font-medium text-gray-700">
+          <h3 className="text-xs font-medium text-gray-700">
             Осталось на сегодня
           </h3>
-          <p className="text-2xl font-light text-emerald-600 mt-1">
+          <p className="text-xl font-light text-emerald-600 mt-1">
             {remainingCalories}{" "}
-            <span className="text-sm text-gray-400">ккал</span>
+            <span className="text-[11px] text-gray-400">ккал</span>
           </p>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">
-            Что бы вы хотели?
+          <label className="block text-[11px] font-medium text-gray-700 mb-2">
+            Идеи по категории или описанию
           </label>
+          <div className="flex gap-1.5 overflow-x-auto pb-3 hide-scrollbar">
+            {['Завтрак', 'Обед', 'Ужин', 'Перекус', 'Десерт'].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setUserInput(cat)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${userInput === cat ? 'bg-emerald-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
           <div className="relative">
             <input
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Например: хочу соленого, или с картошкой..."
-              className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-100 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+              placeholder="Мясо с картошкой, или что-то легкое..."
+              className="w-full px-3 py-2 rounded-[12px] bg-gray-50 border border-gray-100 text-[13px] focus:outline-none focus:border-emerald-500 transition-colors"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSearch();
               }}
@@ -140,7 +151,7 @@ export function RecommendationsScreen() {
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-[12px] text-xs">
+          <div className="bg-red-50 text-red-600 p-2.5 rounded-[10px] text-[11px]">
             {error}
           </div>
         )}
@@ -148,7 +159,7 @@ export function RecommendationsScreen() {
         <button
           onClick={handleSearch}
           disabled={isSearching}
-          className="relative overflow-hidden w-full bg-emerald-50 text-emerald-600 font-medium text-sm py-3 rounded-[12px] hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="relative overflow-hidden w-full bg-emerald-50 text-emerald-600 font-medium text-[13px] py-2.5 rounded-[12px] hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center gap-2"
         >
           {isSearching && (
             <div
@@ -159,12 +170,12 @@ export function RecommendationsScreen() {
           <div className="relative z-10 flex items-center gap-2">
             {isSearching ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
                 Поиск... {loadingProgress}%
               </>
             ) : (
               <>
-                <Search className="w-4 h-4 text-emerald-600" />
+                <Search className="w-3.5 h-3.5 text-emerald-600" />
                 Найти идеи
               </>
             )}
@@ -173,30 +184,30 @@ export function RecommendationsScreen() {
       </div>
 
       {recommendations.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-900 px-1 pt-2">
+        <div className="space-y-2">
+          <h3 className="text-xs font-medium text-gray-900 px-1 pt-1">
             Рекомендации
           </h3>
           {recommendations.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-[20px] p-4 shadow-sm flex flex-col gap-2"
+              className="bg-white rounded-[16px] p-3 shadow-sm flex flex-col gap-1.5"
             >
               <div className="flex justify-between items-start gap-2">
-                <h4 className="font-medium text-gray-900 text-sm leading-tight">
+                <h4 className="font-medium text-gray-900 text-[13px] leading-tight">
                   {item.title}
                 </h4>
-                <span className="text-emerald-600 font-medium text-sm whitespace-nowrap">
+                <span className="text-emerald-600 font-medium text-[13px] whitespace-nowrap">
                   {item.calories} ккал
                 </span>
               </div>
-              <p className="text-xs text-gray-600">{item.shortDescription}</p>
+              <p className="text-[11px] text-gray-600 leading-relaxed">{item.shortDescription}</p>
 
               <button
                 onClick={() => loadRecipe(item)}
-                className="mt-2 text-xs font-medium text-emerald-600 flex items-center gap-1 hover:text-emerald-700 transition-colors w-fit"
+                className="mt-1 text-[11px] font-medium text-emerald-600 flex items-center gap-1 hover:text-emerald-700 transition-colors w-fit"
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-3 h-3" />
                 Смотреть рецепт
               </button>
             </div>
@@ -220,16 +231,16 @@ export function RecommendationsScreen() {
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto flex-1">
+            <div className="p-4 overflow-y-auto flex-1">
               {isLoadingRecipe ? (
                 <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-                  <span className="text-sm font-medium">
+                  <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+                  <span className="text-[13px] font-medium">
                     Создаем рецепт... {recipeProgress}%
                   </span>
                 </div>
               ) : (
-                <div className="prose prose-sm prose-emerald max-w-none text-sm text-gray-700 whitespace-pre-wrap">
+                <div className="prose prose-sm prose-emerald max-w-none text-[13px] text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {detailedRecipe}
                 </div>
               )}

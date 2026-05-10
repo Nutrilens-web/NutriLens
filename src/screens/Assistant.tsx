@@ -2,63 +2,96 @@ import React, { useState } from 'react';
 import { ChatScreen } from './Chat';
 import { RecommendationsScreen } from './Recommendations';
 import { GroceryScreen } from './Grocery';
-import { RecipesBookScreen } from './RecipesBook';
-import { MessageCircle, Lightbulb, ShoppingCart, Book, ChevronLeft, Sparkles } from 'lucide-react';
+import { FridgeScannerScreen } from './FridgeScanner';
+import { MenuAnalyzerScreen } from './MenuAnalyzer';
+import { WaterTrackerScreen } from './WaterTracker';
+import { HabitAnalyzerScreen } from './HabitAnalyzer';
+import { MessageCircle, Lightbulb, ShoppingCart, ChevronLeft, Sparkles, ChefHat, Utensils, Droplets, Activity } from 'lucide-react';
 
-type Tool = 'hub' | 'chat' | 'ideas' | 'grocery' | 'recipes';
+type Tool = 'hub' | 'chat' | 'ideas' | 'grocery' | 'fridge' | 'menu' | 'water' | 'habits';
 
 export function AssistantScreen() {
   const [currentTool, setCurrentTool] = useState<Tool>('hub');
 
   if (currentTool === 'hub') {
     return (
-      <div className="space-y-5 pb-6">
-        <div className="flex items-center justify-between mb-4 px-1">
+      <div className="space-y-4 pb-6">
+        <div className="flex items-center justify-between mb-2 px-1">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-emerald-500" />
-            Ассистент
+            Инструменты ИИ
           </h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setCurrentTool('chat')}
-            className="bg-white p-4 rounded-[20px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-3 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
           >
-            <div className="bg-emerald-100 p-3 rounded-full text-emerald-600">
-              <MessageCircle className="w-6 h-6" />
+            <div className="bg-emerald-100 p-2 rounded-full text-emerald-600">
+              <MessageCircle className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-gray-800">Чат с диетологом</span>
+            <span className="text-xs font-medium text-gray-800 text-center">Чат с диетологом</span>
           </button>
 
           <button
             onClick={() => setCurrentTool('ideas')}
-            className="bg-white p-4 rounded-[20px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-3 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
           >
-            <div className="bg-yellow-100 p-3 rounded-full text-yellow-600">
-              <Lightbulb className="w-6 h-6" />
+            <div className="bg-yellow-100 p-2 rounded-full text-yellow-600">
+              <Lightbulb className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-gray-800">Идеи для еды</span>
+            <span className="text-xs font-medium text-gray-800 text-center">Идеи и Рецепты</span>
           </button>
 
           <button
-            onClick={() => setCurrentTool('recipes')}
-            className="bg-white p-4 rounded-[20px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-3 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+            onClick={() => setCurrentTool('fridge')}
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
           >
-            <div className="bg-orange-100 p-3 rounded-full text-orange-600">
-              <Book className="w-6 h-6" />
+            <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+              <ChefHat className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-gray-800">Книга рецептов</span>
+            <span className="text-xs font-medium text-gray-800 text-center">Разбор холодильника</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTool('menu')}
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+          >
+            <div className="bg-purple-100 p-2 rounded-full text-purple-600">
+              <Utensils className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium text-gray-800 text-center">Оценка ресторана</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTool('water')}
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+          >
+            <div className="bg-sky-100 p-2 rounded-full text-sky-600">
+              <Droplets className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium text-gray-800 text-center">Водный баланс</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTool('habits')}
+            className="bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+          >
+            <div className="bg-rose-100 p-2 rounded-full text-rose-600">
+              <Activity className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium text-gray-800 text-center">Разбор привычек</span>
           </button>
 
           <button
             onClick={() => setCurrentTool('grocery')}
-            className="bg-white p-4 rounded-[20px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-3 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+            className="col-span-2 bg-white p-3 rounded-[16px] shadow-[0_0_20px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-2 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
           >
-            <div className="bg-indigo-100 p-3 rounded-full text-indigo-600">
-              <ShoppingCart className="w-6 h-6" />
+            <div className="bg-indigo-100 p-2 rounded-full text-indigo-600">
+              <ShoppingCart className="w-5 h-5" />
             </div>
-            <span className="text-sm font-medium text-gray-800 text-center">Список покупок</span>
+            <span className="text-xs font-medium text-gray-800 text-center">Список покупок на неделю</span>
           </button>
         </div>
       </div>
@@ -80,7 +113,10 @@ export function AssistantScreen() {
         {currentTool === 'chat' && <ChatScreen />}
         {currentTool === 'ideas' && <RecommendationsScreen />}
         {currentTool === 'grocery' && <GroceryScreen />}
-        {currentTool === 'recipes' && <RecipesBookScreen />}
+        {currentTool === 'fridge' && <FridgeScannerScreen />}
+        {currentTool === 'menu' && <MenuAnalyzerScreen />}
+        {currentTool === 'water' && <WaterTrackerScreen />}
+        {currentTool === 'habits' && <HabitAnalyzerScreen />}
       </div>
     </div>
   );

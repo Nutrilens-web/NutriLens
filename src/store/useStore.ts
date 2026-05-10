@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Meal, Settings, FavoriteMeal, WeightEntry } from '../types';
+import { Meal, Settings, FavoriteMeal, WeightEntry, ChatMessage } from '../types';
 
 const SETTINGS_KEY = 'nutrilens_settings';
 const MEALS_KEY = 'nutrilens_meals';
 const FAVORITES_KEY = 'nutrilens_favorites';
 const WEIGHTS_KEY = 'nutrilens_weights';
 const GROCERY_KEY = 'nutrilens_grocery';
+const GROCERY_CHECKED_KEY = 'nutrilens_grocery_checked';
+const CHAT_HISTORY_KEY = 'nutrilens_chat_history';
 
 const defaultSettings: Settings = {
   apiKey: '',
@@ -37,6 +39,18 @@ export function useStore() {
   const [groceryData, setGroceryDataState] = useState<{ plan: string, categories: {category: string, items: string[]}[] } | null>(() => {
     const saved = localStorage.getItem(GROCERY_KEY);
     return saved ? JSON.parse(saved) : null;
+  });
+
+  const [groceryCheckedItems, setGroceryCheckedItemsState] = useState<string[]>(() => {
+    const saved = localStorage.getItem(GROCERY_CHECKED_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [chatHistory, setChatHistoryState] = useState<ChatMessage[]>(() => {
+    const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+    return saved ? JSON.parse(saved) : [
+      { role: 'model', text: 'Привет! Я твой ИИ-диетолог. Чем могу помочь сегодня?' }
+    ];
   });
 
   const setSettings = useCallback((newSettings: Settings) => {
@@ -128,7 +142,30 @@ export function useStore() {
         localStorage.setItem(GROCERY_KEY, JSON.stringify(data));
     } else {
         localStorage.removeItem(GROCERY_KEY);
+        // Clear checked items as well
+        setGroceryCheckedItemsState([]);
+        localStorage.removeItem(GROCERY_CHECKED_KEY);
     }
+  }, []);
+
+  const toggleGroceryCheckedItem = useCallback((item: string) => {
+    setGroceryCheckedItemsState(prev => {
+      const isChecked = prev.includes(item);
+      const updated = isChecked ? prev.filter(i => i !== item) : [...prev, item];
+      localStorage.setItem(GROCERY_CHECKED_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  const saveChatHistory = useCallback((history: ChatMessage[]) => {
+    setChatHistoryState(history);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+  }, []);
+
+  const clearChatHistory = useCallback(() => {
+    const initial: ChatMessage[] = [{ role: 'model', text: 'Привет! Я твой ИИ-диетолог. Чем могу помочь сегодня?' }];
+    setChatHistoryState(initial);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(initial));
   }, []);
 
   return {
@@ -138,6 +175,8 @@ export function useStore() {
     favorites,
     weights,
     groceryData,
+    groceryCheckedItems,
+    chatHistory,
     addMeal,
     updateMeal,
     deleteMeal,
@@ -145,5 +184,8 @@ export function useStore() {
     removeFavorite,
     addWeight,
     saveGroceryData,
+    toggleGroceryCheckedItem,
+    saveChatHistory,
+    clearChatHistory,
   };
 }
