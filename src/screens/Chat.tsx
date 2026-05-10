@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Send, Loader2, Bot, Image as ImageIcon, X } from 'lucide-react';
+import { Send, Loader2, Bot, Image as ImageIcon, X, Camera } from 'lucide-react';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { compressImage } from '../utils/image';
 import Markdown from 'react-markdown';
@@ -242,6 +242,20 @@ export function ChatScreen() {
               ref={fileInputRef} 
               onChange={handleImageSelect} 
             />
+            <input 
+              type="file" 
+              accept="image/*"
+              capture="environment" 
+              className="hidden" 
+              ref={cameraInputRef} 
+              onChange={handleImageSelect} 
+            />
+            <button 
+               onClick={() => cameraInputRef.current?.click()}
+               className="p-2 text-gray-400 hover:text-emerald-500 transition-colors bg-gray-50 rounded-full shrink-0 border border-transparent hover:border-emerald-100"
+            >
+               <Camera className="w-5 h-5" />
+            </button>
             <button 
                onClick={() => fileInputRef.current?.click()}
                className="p-2 text-gray-400 hover:text-emerald-500 transition-colors bg-gray-50 rounded-full shrink-0 border border-transparent hover:border-emerald-100"

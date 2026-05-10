@@ -1,30 +1,54 @@
 import React, { useState, useRef } from 'react';
-import { Camera, ImagePlus, Sparkles, Utensils } from 'lucide-react';
+import { Camera, ImagePlus, Sparkles, Utensils, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 
 export function MenuAnalyzerScreen() {
-  const { settings } = useStore();
-  const [image, setImage] = useState<string | null>(null);
+  const { settings, meals } = useStore();
+  const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const todayCalories = meals
+    .filter(m => m.timestamp.startsWith(new Date().toISOString().split('T')[0]))
+    .reduce((acc, m) => acc + m.calories, 0);
+  const remainingCalories = Math.max(0, settings.dailyGoal - todayCalories);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImage(reader.result as string);
+    const files = Array.from(e.target.files);
+    let loaded = 0;
+    const newImages: string[] = [];
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        newImages.push(reader.result as string);
+        loaded++;
+        if (loaded === files.length) {
+          setImages(prev => [...prev, ...newImages]);
+          setResult(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    if (images.length === 1) {
       setResult(null);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleAnalyze = async () => {
-    if (!image) return;
+    if (images.length === 0) return;
     if (!settings.apiKey) {
       setError("Укажите API ключ Gemini в настройках");
       return;
@@ -36,19 +60,23 @@ export function MenuAnalyzerScreen() {
     try {
       const ai = new GoogleGenAI({ apiKey: settings.apiKey });
       const prompt = `Посмотри на фото меню из ресторана/кафе.
-Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день.
-Твоя задача — помочь пользователю выбрать:
-1. "Топ-3 самых здоровых блюда" из меню с примерной оценкой их КБЖУ.
+Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день. Свободно на сегодня: ${remainingCalories} ккал.
+Твоя задача — помочь пользователю выбрать блюда, учитывая остаток калорий:
+1. "Топ-3 лучших блюда" из меню с примерной оценкой их КБЖУ, которые вписываются в цель.
 2. "Что взять, если хочется..." (предложи самый безопасный вариант для сладкого или сытного).
 3. "Красные флаги" (каких блюд из меню лучше избегать и почему).
 Отвечай структурированно, используй Markdown.`;
+
+      const imageParts = images.map(img => ({
+        inlineData: { data: img.replace(/^data:image\/\w+;base64,/, ""), mimeType: "image/jpeg" }
+      }));
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
           { role: 'user', parts: [
             { text: prompt },
-            { inlineData: { data: image.replace(/^data:image\/\w+;base64,/, ""), mimeType: "image/jpeg" } }
+            ...imageParts
           ]}
         ],
         config: {
@@ -79,30 +107,46 @@ export function MenuAnalyzerScreen() {
         </div>
       </div>
       <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
-        Сфотографируйте меню ресторана, и ИИ выберет лучшие блюда, подходящие под вашу цель, и поможет обойти "скрытые калории".
+        Сфотографируйте меню, и ИИ поможет сделать выбор.
+        Остаток калорий: <span className="text-emerald-600 font-bold">{remainingCalories} ккал</span>.
       </p>
 
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1">
-        {!image ? (
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full aspect-[4/3] rounded-[20px] bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-gray-100 transition-colors"
-          >
-            <ImagePlus className="w-6 h-6 text-gray-400" />
-            <span className="text-[13px] font-medium text-gray-500">Добавить фото меню</span>
-            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageSelect} />
-          </div>
-        ) : (
-          <div className="relative group rounded-[20px] overflow-hidden">
-            <img src={image} alt="Menu" className="w-full h-40 object-cover" />
-            <button 
-              onClick={() => { setImage(null); setResult(null); }}
-              className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-black/70 transition-colors"
-            >
-              Изменить
-            </button>
+        <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleImageSelect} />
+        <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleImageSelect} />
+        
+        {images.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+            {images.map((img, idx) => (
+              <div key={idx} className="relative w-24 h-24 flex-shrink-0 group rounded-[16px] overflow-hidden bg-gray-50">
+                <img src={img} alt="Menu" className="w-full h-full object-cover" />
+                <button 
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full text-xs font-medium hover:bg-black/70 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 py-2.5 flex items-center justify-center gap-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 text-[13px] font-medium border border-gray-200 transition-colors"
+          >
+            <ImagePlus className="w-4 h-4 text-gray-500" />
+            Галерея
+          </button>
+          <button
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex-1 py-2.5 flex items-center justify-center gap-2 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 text-[13px] font-medium border border-gray-200 transition-colors"
+          >
+            <Camera className="w-4 h-4 text-gray-500" />
+            Камера
+          </button>
+        </div>
 
         {error && (
           <div className="bg-red-50 text-red-500 text-[13px] p-3 rounded-[12px]">
@@ -110,7 +154,7 @@ export function MenuAnalyzerScreen() {
           </div>
         )}
 
-        {image && !result && !isLoading && (
+        {images.length > 0 && !result && !isLoading && (
           <button
             onClick={handleAnalyze}
             className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-medium py-2.5 px-4 rounded-xl hover:bg-purple-700 active:scale-[0.98] transition-all text-[13px]"
