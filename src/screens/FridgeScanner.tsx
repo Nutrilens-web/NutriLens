@@ -14,7 +14,7 @@ export function FridgeScannerScreen() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const todayCalories = meals
-    .filter(m => m.timestamp.startsWith(new Date().toISOString().split('T')[0]))
+    .filter(m => m.date === new Date().toISOString().split('T')[0])
     .reduce((acc, m) => acc + m.calories, 0);
   const remainingCalories = Math.max(0, settings.dailyGoal - todayCalories);
 
