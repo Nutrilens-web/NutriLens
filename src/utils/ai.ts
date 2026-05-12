@@ -1,3 +1,4 @@
+import { getAI } from './ai-wrapper';
 import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
 export async function analyzeMealImage(
@@ -13,7 +14,7 @@ export async function analyzeMealImage(
     );
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getAI({ apiKey });
 
   const prompt = `Ты высокоточный эксперт-диетолог и анализатор еды. Твоя задача - определить КБЖУ (калории, белки, жиры, углеводы) СУММАРНО для ВСЕХ продуктов или блюд, представленных на фотографиях и/или описанных в тексте.
 
@@ -131,7 +132,7 @@ export async function getRecommendations(
     );
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getAI({ apiKey });
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -227,7 +228,7 @@ export async function getRecommendations(
 
 export async function getDetailedRecipe(apiKey: string, recipePrompt: string) {
   if (!apiKey) throw new Error("API ключ не указан.");
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getAI({ apiKey });
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
@@ -267,7 +268,7 @@ ${recipePrompt}
 }
 
 export async function generateGroceryList(apiKey: string, userContext: string, dailyGoal: number, preferences: string) {
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getAI({ apiKey });
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}

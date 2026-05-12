@@ -1,3 +1,4 @@
+import { getAI } from '../utils/ai-wrapper';
 import React, { useState, useRef } from 'react';
 import { Camera, ImagePlus, Sparkles, ChefHat, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -57,7 +58,7 @@ export function FridgeScannerScreen() {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey });
       const prompt = `Посмотри на фото продуктов (содержимое холодильника или стола). 
 Пользователь: ${settings.userContext}.${useRemainingCalories ? ` Цель на день: ${settings.dailyGoal} ккал. Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Предложи 3 здоровых рецепта из того, что ты видишь${useRemainingCalories ? ', стараясь вписаться в оставшиеся калории (если их много - можно сытнее, если мало - более легкие)' : ''}. Для каждого рецепта:

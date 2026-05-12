@@ -1,3 +1,4 @@
+import { getAI } from '../utils/ai-wrapper';
 import React, { useState } from 'react';
 import { Sparkles, Droplets, Plus, Minus } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -19,7 +20,7 @@ export function WaterTrackerScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey });
       const prompt = `Пользователь: ${settings.userContext}.
 Проанализируй эти данные и:
 1. Вычисли рекомендуемую индивидуальную норму воды в день (в литрах и стаканах).

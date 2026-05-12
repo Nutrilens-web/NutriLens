@@ -1,3 +1,4 @@
+import { getAI } from '../utils/ai-wrapper';
 import React, { useState } from 'react';
 import { Sparkles, Activity, Target } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -20,7 +21,7 @@ export function HabitAnalyzerScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey });
       const prompt = `Пользователь: ${settings.userContext}.
 У пользователя есть следующая привычка или проблема с питанием: "${habit}".
 

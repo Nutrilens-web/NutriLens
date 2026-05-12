@@ -1,3 +1,4 @@
+import { getAI } from '../utils/ai-wrapper';
 import React, { useState, useRef } from 'react';
 import { Camera, ImagePlus, Sparkles, Utensils, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -56,7 +57,7 @@ export function MenuAnalyzerScreen() {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey });
       const prompt = `Посмотри на фото меню из ресторана/кафе.
 Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день.${useRemainingCalories ? ` Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Твоя задача — помочь пользователю выбрать блюда${useRemainingCalories ? ', учитывая остаток калорий' : ''}:

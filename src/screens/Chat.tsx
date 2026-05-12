@@ -1,3 +1,4 @@
+import { getAI } from '../utils/ai-wrapper';
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Send, Loader2, Bot, Image as ImageIcon, X, Camera } from 'lucide-react';
@@ -77,7 +78,7 @@ export function ChatScreen() {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey });
       
       const today = new Date().toISOString().split('T')[0];
       const todayMeals = meals.filter(m => m.date === today);
@@ -92,14 +93,6 @@ export function ChatScreen() {
         role: m.role,
         parts: [{ text: m.text }]
       }));
-
-      // We need to inject system instructions. Gemini uses model systemInstructions if available or we prepend it to the first user message.
-      const chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-          systemInstruction: systemContext
-        }
-      });
 
       // Restore history via manual messages (using send_message or just generating content with full history)
       const fullHistory = [
