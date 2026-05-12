@@ -3,6 +3,7 @@ import { Camera, ImagePlus, Sparkles, Utensils, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
+import { compressImage } from '../utils/image';
 
 export function MenuAnalyzerScreen() {
   const { settings, meals } = useStore();
@@ -13,29 +14,26 @@ export function MenuAnalyzerScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const [useRemainingCalories, setUseRemainingCalories] = useState(true);
+
   const todayCalories = meals
     .filter(m => m.date === new Date().toISOString().split('T')[0])
     .reduce((acc, m) => acc + m.calories, 0);
   const remainingCalories = Math.max(0, settings.dailyGoal - todayCalories);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const files = Array.from(e.target.files);
-    let loaded = 0;
-    const newImages: string[] = [];
     
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        newImages.push(reader.result as string);
-        loaded++;
-        if (loaded === files.length) {
-          setImages(prev => [...prev, ...newImages]);
-          setResult(null);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const compressedImages = await Promise.all(
+        files.map(file => compressImage(file, 1536, 1536))
+      );
+      setImages(prev => [...prev, ...compressedImages]);
+      setResult(null);
+    } catch (err) {
+      setError("Ошибка при обработке фото");
+    }
     
     e.target.value = '';
   };
@@ -60,9 +58,9 @@ export function MenuAnalyzerScreen() {
     try {
       const ai = new GoogleGenAI({ apiKey: settings.apiKey });
       const prompt = `Посмотри на фото меню из ресторана/кафе.
-Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день. Свободно на сегодня: ${remainingCalories} ккал.
-Твоя задача — помочь пользователю выбрать блюда, учитывая остаток калорий:
-1. "Топ-3 лучших блюда" из меню с примерной оценкой их КБЖУ, которые вписываются в цель.
+Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день.${useRemainingCalories ? ` Свободно на сегодня: ${remainingCalories} ккал.` : ''}
+Твоя задача — помочь пользователю выбрать блюда${useRemainingCalories ? ', учитывая остаток калорий' : ''}:
+1. "Топ-3 лучших блюда" из меню с примерной оценкой их КБЖУ${useRemainingCalories ? ', которые вписываются в цель' : ''}.
 2. "Что взять, если хочется..." (предложи самый безопасный вариант для сладкого или сытного).
 3. "Красные флаги" (каких блюд из меню лучше избегать и почему).
 Отвечай структурированно, используй Markdown.`;
@@ -108,10 +106,22 @@ export function MenuAnalyzerScreen() {
       </div>
       <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
         Сфотографируйте меню, и ИИ поможет сделать выбор.
-        Остаток калорий: <span className="text-emerald-600 font-bold">{remainingCalories} ккал</span>.
+        {useRemainingCalories && (
+          <> Остаток калорий: <span className="text-emerald-600 font-bold">{remainingCalories} ккал</span>.</>
+        )}
       </p>
 
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1">
+        <label className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-[12px] cursor-pointer hover:bg-gray-100 transition-colors">
+          <input 
+            type="checkbox" 
+            checked={useRemainingCalories} 
+            onChange={(e) => setUseRemainingCalories(e.target.checked)}
+            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 bg-white"
+          />
+          <span className="text-[13px] font-medium text-gray-700">Учитывать остаток калорий</span>
+        </label>
+
         <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleImageSelect} />
         <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleImageSelect} />
         

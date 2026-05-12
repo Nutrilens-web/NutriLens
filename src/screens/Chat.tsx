@@ -13,6 +13,7 @@ export function ChatScreen() {
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const isFirstMount = useRef(true);
 
   useEffect(() => {

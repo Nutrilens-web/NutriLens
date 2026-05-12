@@ -208,7 +208,7 @@ export function Dashboard() {
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-[20px] p-5 w-full max-w-sm shadow-xl space-y-4">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="text-base font-medium">Вас вес ({isToday ? 'Сегодня' : displayDate})</h3>
+              <h3 className="text-base font-medium">Ваш вес ({isToday ? 'Сегодня' : displayDate})</h3>
               <button onClick={() => setShowWeightModal(false)} className="p-1 text-gray-400 hover:text-gray-800">
                 <X className="w-4 h-4" />
               </button>
