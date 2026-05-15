@@ -48,7 +48,7 @@ export function MenuAnalyzerScreen() {
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
-    if (!settings.apiKey && !settings.useNanoGPTOnly) {
+    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
@@ -57,7 +57,7 @@ export function MenuAnalyzerScreen() {
     setError(null);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
       const prompt = `Посмотри на фото меню из ресторана/кафе.
 Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день.${useRemainingCalories ? ` Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Твоя задача — помочь пользователю выбрать блюда${useRemainingCalories ? ', учитывая остаток калорий' : ''}:

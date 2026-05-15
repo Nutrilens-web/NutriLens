@@ -8,18 +8,14 @@ export async function analyzeMealImage(
   userContext: string,
   userInput: string,
   recentMealsContext: string = "",
+  onProgress?: (msg: string) => void
 ) {
-  if (!settings.apiKey && !settings.useNanoGPTOnly) {
+  const mode = settings.apiMode || 'free';
+  if (mode === 'free' && !settings.apiKey) {
     throw new Error(
-      "API ключ не указан. Пожалуйста, добавьте его в настройках.",
+      "API ключ не указан. Пожалуйста, добавьте его в настройках."
     );
   }
-
-  const ai = getAI({ 
-    apiKey: settings.apiKey, 
-    useNanoGPTOnly: settings.useNanoGPTOnly, 
-    nanoModel: settings.nanoModel 
-  });
 
   const prompt = `Ты высокоточный эксперт-диетолог и анализатор еды. Твоя задача - определить КБЖУ (калории, белки, жиры, углеводы) СУММАРНО для ВСЕХ продуктов или блюд, представленных на фотографиях и/или описанных в тексте.
 
@@ -33,87 +29,104 @@ export async function analyzeMealImage(
 1. Внимательно изучи текст и АБСОЛЮТНО ВСЕ прикрепленные фотографии. Если пользователь прислал несколько фото, ты ОБЯЗАН проанализировать еду на КАЖДОМ из них.
 2. Если в тексте упоминается только одно блюдо, а на фото их несколько, ты ВСЕ РАВНО должен учесть всю еду со всех фото (текст просто дополняет информацию про одно блюдо, а не отменяет другие фото).
 3. Суммируй КБЖУ для ВСЕЙ найденной еды (и из текста, и со ВСЕХ фото). Пересчитай данные на тот размер порции, который указан или очевиден, либо оцени вес на глаз.
-4. В поле "aiThoughts" подробно распиши свои рассуждения: перечисли ВСЕ найденные блюда/продукты на всех фото и в тексте, приведи расчеты (КБЖУ и вес) для каждого блюда отдельно, а в конце обязательно покажи итоговое суммирование.
-5. В поле "name" запиши перечисление всей выявленной еды (например: "Омлет с сыром, кофе, сэндвич с курицей"). Ни в коем случае не оставляй пустым.
-6. Поля calories, protein, fat, carbs должны содержать ИТОГОВЫЕ СУММАРНЫЕ числа для всего приема пищи, округленные до целых.
-7. В любой непонятной ситуации делай лучшую примерную оценку (educated guess) - лучше приблизительные данные, чем нули.`;
+4. Перед тем как выдавать итоговые калории и БЖУ, ты должна обязательно заполнить поле 'reasoning'. В нем пошагово опиши: какие ингредиенты ты видишь, оцени их примерный вес и учти скрытые калории (масло, соусы). Также оцени свою уверенность в распознавании блюда по шкале от 1 до 10 в поле 'confidence_score'. 
+5. Обязательно скопируй содержимое 'reasoning' в поле 'aiThoughts', так как оно требуется фронтенду, добавив в конец перечисление ВСЕЙ найденной еды, расчеты КБЖУ и веса отдельно для каждого блюда.
+6. В поле "name" запиши перечисление всей выявленной еды (например: "Омлет с сыром, кофе, сэндвич с курицей"). Ни в коем случае не оставляй пустым.
+7. Поля calories, protein, fat, carbs должны содержать ИТОГОВЫЕ СУММАРНЫЕ числа для всего приема пищи, округленные до целых.
+8. В любой непонятной ситуации делай лучшую примерную оценку (educated guess) - лучше приблизительные данные, чем нули.`;
 
   const imageParts = base64Images.map((img) => ({
     inlineData: {
       data: img.replace(/^data:image\/\w+;base64,/, ""),
-      mimeType: "image/jpeg", // assuming jpeg for now
+      mimeType: "image/jpeg",
     },
   }));
 
   const parts = [{ text: prompt }, ...imageParts];
 
-  let response;
-  try {
-    response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts,
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING },
-            calories: { type: Type.NUMBER },
-            protein: { type: Type.NUMBER },
-            fat: { type: Type.NUMBER },
-            carbs: { type: Type.NUMBER },
-            aiThoughts: { type: Type.STRING },
-          },
-          required: ["name", "calories", "protein", "fat", "carbs", "aiThoughts"],
-        },
-        safetySettings: [
+  const callModel = async (modelName: string) => {
+    const isNano = mode !== 'free';
+    const ai = getAI({ 
+      apiKey: settings.apiKey || 'dummy', 
+      useNanoGPTOnly: isNano, 
+      nanoModel: isNano ? modelName : undefined
+    });
+
+    try {
+      const response = await ai.models.generateContent({
+        model: mode === 'free' ? "gemini-2.5-flash" : modelName,
+        contents: [
           {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
+            role: "user",
+            parts,
           },
         ],
-      },
-    });
-  } catch (e: any) {
-    if (e.message?.toLowerCase().includes("safety") || e.message?.toLowerCase().includes("block")) {
-      throw new Error("Запрос был заблокирован фильтрами безопасности Google Gemini. Попробуйте обрезать фото или описать еду только текстом.");
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              calories: { type: Type.NUMBER },
+              protein: { type: Type.NUMBER },
+              fat: { type: Type.NUMBER },
+              carbs: { type: Type.NUMBER },
+              aiThoughts: { type: Type.STRING },
+              reasoning: { type: Type.STRING },
+              confidence_score: { type: Type.NUMBER },
+            },
+            required: ["name", "calories", "protein", "fat", "carbs", "aiThoughts", "reasoning", "confidence_score"],
+          },
+          safetySettings: [
+            {
+              category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+          ],
+        },
+      });
+      
+      const text = response.text || "";
+      if (!text) throw new Error("ИИ вернул пустой ответ.");
+      return JSON.parse(text);
+    } catch (e: any) {
+      if (e.message?.toLowerCase().includes("safety") || e.message?.toLowerCase().includes("block")) {
+        throw new Error("Запрос был заблокирован фильтрами безопасности Google Gemini.");
+      }
+      throw e;
     }
-    throw new Error("Ошибка генерации ИИ: " + (e.message || "Неизвестная ошибка"));
-  }
+  };
 
-  const text = response.text || "";
-  
-  if (!text) {
-    throw new Error("ИИ вернул пустой ответ. Возможно, сработал фильтр безопасности из-за содержимого фото.");
-  }
+  let parsedJson: any;
 
-  let parsedJson: any = {};
-
-  try {
-    parsedJson = JSON.parse(text);
-  } catch (e) {
-    throw new Error("Не удалось распознать ответ от ИИ: " + text);
+  if (mode === 'advanced') {
+    parsedJson = await callModel("google/gemini-3.1-flash-lite");
+    if (!parsedJson.confidence_score || parsedJson.confidence_score < 7) {
+      if (onProgress) {
+        onProgress("Блюдо сложное, подключаю глубокий анализ...");
+      }
+      parsedJson = await callModel("google/gemini-3-flash-preview-thinking");
+    }
+  } else if (mode === 'simple') {
+    parsedJson = await callModel("google/gemini-3.1-flash-lite");
+  } else {
+    parsedJson = await callModel("gemini-2.5-flash");
   }
 
   return {
-    aiThoughts: parsedJson.aiThoughts || "",
+    aiThoughts: parsedJson.aiThoughts || parsedJson.reasoning || "",
     result: {
       name: parsedJson.name || "Распознанная еда",
       calories: Number(parsedJson.calories) || 0,
@@ -131,17 +144,14 @@ export async function getRecommendations(
   remainingCalories: number,
   recentMealsContext: string = "",
 ) {
-  if (!settings.apiKey && !settings.useNanoGPTOnly) {
+  if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
     throw new Error(
       "API ключ не указан. Пожалуйста, добавьте его в настройках.",
     );
   }
 
   const ai = getAI({ 
-    apiKey: settings.apiKey, 
-    useNanoGPTOnly: settings.useNanoGPTOnly, 
-    nanoModel: settings.nanoModel 
-  });
+    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -236,12 +246,9 @@ export async function getRecommendations(
 }
 
 export async function getDetailedRecipe(settings: Settings, recipePrompt: string) {
-  if (!settings.apiKey && !settings.useNanoGPTOnly) throw new Error("API ключ не указан.");
+  if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) throw new Error("API ключ не указан.");
   const ai = getAI({ 
-    apiKey: settings.apiKey, 
-    useNanoGPTOnly: settings.useNanoGPTOnly, 
-    nanoModel: settings.nanoModel 
-  });
+    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
@@ -282,10 +289,7 @@ ${recipePrompt}
 
 export async function generateGroceryList(settings: Settings, userContext: string, dailyGoal: number, preferences: string) {
   const ai = getAI({ 
-    apiKey: settings.apiKey, 
-    useNanoGPTOnly: settings.useNanoGPTOnly, 
-    nanoModel: settings.nanoModel 
-  });
+    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}

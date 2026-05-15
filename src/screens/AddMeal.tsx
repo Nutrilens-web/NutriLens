@@ -73,18 +73,21 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const [progressMsg, setProgressMsg] = useState("");
+
   const handleAnalyze = async () => {
     if (images.length === 0 && !userInput.trim()) {
       setError("Добавьте фото или опишите еду текстом");
       return;
     }
-    if (!settings.apiKey) {
+    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
 
     setIsAnalyzing(true);
     setLoadingProgress(0);
+    setProgressMsg("");
     setError(null);
 
     let currentProgress = 0;
@@ -109,6 +112,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         settings.userContext,
         userInput,
         recentMealsText,
+        (msg) => setProgressMsg(msg)
       );
       setResult({ ...aiResult, aiThoughts });
     } catch (err: any) {
@@ -280,11 +284,11 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                 style={{ width: `${loadingProgress}%` }}
               />
             )}
-            <div className="relative flex items-center gap-2 z-10">
+            <div className="relative flex items-center gap-2 z-10 w-full justify-center px-4">
               {isAnalyzing ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Оценка... {loadingProgress}%
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                  <span className="truncate">{progressMsg || `Оценка... ${loadingProgress}%`}</span>
                 </>
               ) : images.length > 0 ? (
                 "Распознать фото"

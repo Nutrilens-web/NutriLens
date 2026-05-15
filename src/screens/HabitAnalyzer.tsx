@@ -14,14 +14,14 @@ export function HabitAnalyzerScreen() {
 
   const getAnalysis = async () => {
     if (!habit.trim()) return;
-    if (!settings.apiKey && !settings.useNanoGPTOnly) {
+    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
       const prompt = `Пользователь: ${settings.userContext}.
 У пользователя есть следующая привычка или проблема с питанием: "${habit}".
 

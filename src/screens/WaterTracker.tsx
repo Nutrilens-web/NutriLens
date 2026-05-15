@@ -13,14 +13,14 @@ export function WaterTrackerScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const getWaterAdvice = async () => {
-    if (!settings.apiKey && !settings.useNanoGPTOnly) {
+    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
       const prompt = `Пользователь: ${settings.userContext}.
 Проанализируй эти данные и:
 1. Вычисли рекомендуемую индивидуальную норму воды в день (в литрах и стаканах).

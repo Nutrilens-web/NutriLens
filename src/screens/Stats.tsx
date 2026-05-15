@@ -68,7 +68,7 @@ export function StatsScreen() {
   const weightChange = currentWeight - oldWeight;
 
   const handleHealthAnalysis = async () => {
-    if (!settings.apiKey && !settings.useNanoGPTOnly) {
+    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
       setHealthScore("Сначала укажите API ключ в настройках");
       return;
     }
@@ -80,7 +80,7 @@ export function StatsScreen() {
     ).join('\n');
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
       const prompt = `Проанализируй рацион за последние дни:\n${recentData}\n\nЦель пользователя: ${settings.dailyGoal} ккал/день.\n\nДай оценку от 1 до 10 (где 10 - идеально) и 2-3 коротких конструктивных совета по улучшению нутриентов/выбора блюд. Отвечай коротко и только по делу.`;
       
       const response = await ai.models.generateContent({
