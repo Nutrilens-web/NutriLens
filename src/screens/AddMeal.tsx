@@ -104,7 +104,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
 
     try {
       const { result: aiResult, aiThoughts } = await analyzeMealImage(
-        settings.apiKey,
+        settings,
         images,
         settings.userContext,
         userInput,

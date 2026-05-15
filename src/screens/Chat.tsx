@@ -65,7 +65,7 @@ export function ChatScreen() {
   const handleSend = async () => {
     if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
     
-    if (!settings.apiKey) {
+    if (!settings.apiKey && !settings.useNanoGPTOnly) {
       setError('Сначала укажите API Ключ Gemini в настройках');
       return;
     }
@@ -78,7 +78,7 @@ export function ChatScreen() {
     setIsLoading(true);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
       
       const today = new Date().toISOString().split('T')[0];
       const todayMeals = meals.filter(m => m.date === today);

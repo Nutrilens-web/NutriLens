@@ -5,6 +5,8 @@ export interface Settings {
   proteinGoal?: number;
   fatGoal?: number;
   carbsGoal?: number;
+  useNanoGPTOnly?: boolean;
+  nanoModel?: string;
 }
 
 export interface Meal {

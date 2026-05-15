@@ -13,6 +13,8 @@ const defaultSettings: Settings = {
   apiKey: '',
   dailyGoal: 2000,
   userContext: 'Я мужчина, 85 кг, тарелки диаметром 26 см, жарю на 5г масла',
+  useNanoGPTOnly: false,
+  nanoModel: 'google/gemini-3-flash-preview-thinking',
 };
 
 export function useStore() {

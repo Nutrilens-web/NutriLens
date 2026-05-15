@@ -19,7 +19,7 @@ export function GroceryScreen() {
     setIsLoading(true);
     
     try {
-      const data = await generateGroceryList(settings.apiKey, settings.userContext, settings.dailyGoal, preferences);
+      const data = await generateGroceryList(settings, settings.userContext, settings.dailyGoal, preferences);
       if (data && data.categories) {
         saveGroceryData(data);
       } else {

@@ -60,7 +60,7 @@ export function RecommendationsScreen() {
 
     try {
       const results = await getRecommendations(
-        settings.apiKey,
+        settings,
         settings.userContext,
         userInput,
         remainingCalories,
@@ -89,7 +89,7 @@ export function RecommendationsScreen() {
 
     try {
       const recipe = await getDetailedRecipe(
-        settings.apiKey,
+        settings,
         item.recipePrompt,
       );
       setDetailedRecipe(recipe);

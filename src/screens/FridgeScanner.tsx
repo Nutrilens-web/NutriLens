@@ -49,7 +49,7 @@ export function FridgeScannerScreen() {
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
-    if (!settings.apiKey) {
+    if (!settings.apiKey && !settings.useNanoGPTOnly) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
@@ -58,7 +58,7 @@ export function FridgeScannerScreen() {
     setError(null);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
       const prompt = `Посмотри на фото продуктов (содержимое холодильника или стола). 
 Пользователь: ${settings.userContext}.${useRemainingCalories ? ` Цель на день: ${settings.dailyGoal} ккал. Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Предложи 3 здоровых рецепта из того, что ты видишь${useRemainingCalories ? ', стараясь вписаться в оставшиеся калории (если их много - можно сытнее, если мало - более легкие)' : ''}. Для каждого рецепта:

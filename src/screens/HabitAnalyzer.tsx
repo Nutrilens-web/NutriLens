@@ -14,14 +14,14 @@ export function HabitAnalyzerScreen() {
 
   const getAnalysis = async () => {
     if (!habit.trim()) return;
-    if (!settings.apiKey) {
+    if (!settings.apiKey && !settings.useNanoGPTOnly) {
       setError("Укажите API ключ Gemini в настройках");
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const ai = getAI({ apiKey: settings.apiKey });
+      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.useNanoGPTOnly, nanoModel: settings.nanoModel });
       const prompt = `Пользователь: ${settings.userContext}.
 У пользователя есть следующая привычка или проблема с питанием: "${habit}".
 

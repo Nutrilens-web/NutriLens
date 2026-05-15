@@ -69,7 +69,7 @@ export async function callNanoGPTFallback(params: any): Promise<{text: string}> 
           "Authorization": `Bearer ${NANO_API_KEY}`
       },
       body: JSON.stringify({
-          model: "google/gemini-3-flash-preview-thinking",
+          model: params.nanoModel || "google/gemini-3-flash-preview-thinking",
           messages: messages
       })
   });

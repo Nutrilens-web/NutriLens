@@ -1,20 +1,25 @@
 import { getAI } from './ai-wrapper';
 import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { Settings } from '../types';
 
 export async function analyzeMealImage(
-  apiKey: string,
+  settings: Settings,
   base64Images: string[],
   userContext: string,
   userInput: string,
   recentMealsContext: string = "",
 ) {
-  if (!apiKey) {
+  if (!settings.apiKey && !settings.useNanoGPTOnly) {
     throw new Error(
       "API ключ не указан. Пожалуйста, добавьте его в настройках.",
     );
   }
 
-  const ai = getAI({ apiKey });
+  const ai = getAI({ 
+    apiKey: settings.apiKey, 
+    useNanoGPTOnly: settings.useNanoGPTOnly, 
+    nanoModel: settings.nanoModel 
+  });
 
   const prompt = `Ты высокоточный эксперт-диетолог и анализатор еды. Твоя задача - определить КБЖУ (калории, белки, жиры, углеводы) СУММАРНО для ВСЕХ продуктов или блюд, представленных на фотографиях и/или описанных в тексте.
 
@@ -120,19 +125,23 @@ export async function analyzeMealImage(
 }
 
 export async function getRecommendations(
-  apiKey: string,
+  settings: Settings,
   userContext: string,
   userInput: string,
   remainingCalories: number,
   recentMealsContext: string = "",
 ) {
-  if (!apiKey) {
+  if (!settings.apiKey && !settings.useNanoGPTOnly) {
     throw new Error(
       "API ключ не указан. Пожалуйста, добавьте его в настройках.",
     );
   }
 
-  const ai = getAI({ apiKey });
+  const ai = getAI({ 
+    apiKey: settings.apiKey, 
+    useNanoGPTOnly: settings.useNanoGPTOnly, 
+    nanoModel: settings.nanoModel 
+  });
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -226,9 +235,13 @@ export async function getRecommendations(
   }>;
 }
 
-export async function getDetailedRecipe(apiKey: string, recipePrompt: string) {
-  if (!apiKey) throw new Error("API ключ не указан.");
-  const ai = getAI({ apiKey });
+export async function getDetailedRecipe(settings: Settings, recipePrompt: string) {
+  if (!settings.apiKey && !settings.useNanoGPTOnly) throw new Error("API ключ не указан.");
+  const ai = getAI({ 
+    apiKey: settings.apiKey, 
+    useNanoGPTOnly: settings.useNanoGPTOnly, 
+    nanoModel: settings.nanoModel 
+  });
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
@@ -267,8 +280,12 @@ ${recipePrompt}
   return response.text || "К сожалению, рецепт недоступен.";
 }
 
-export async function generateGroceryList(apiKey: string, userContext: string, dailyGoal: number, preferences: string) {
-  const ai = getAI({ apiKey });
+export async function generateGroceryList(settings: Settings, userContext: string, dailyGoal: number, preferences: string) {
+  const ai = getAI({ 
+    apiKey: settings.apiKey, 
+    useNanoGPTOnly: settings.useNanoGPTOnly, 
+    nanoModel: settings.nanoModel 
+  });
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}
