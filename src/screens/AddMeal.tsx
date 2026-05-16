@@ -34,26 +34,42 @@ function AnalyzingSkeleton({ isDeep }: { isDeep: boolean }) {
   }, []);
 
   return (
-    <div className="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] space-y-4 w-full relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_3px_rgba(52,211,153,0.8)] animate-[scan_2s_ease-in-out_infinite] z-10" />
-      
-      <div className="h-8 bg-gray-200 rounded w-3/4 mb-6 animate-pulse" />
-      
-      <div className="h-16 w-full bg-emerald-50 rounded-[12px] mb-4 animate-pulse" />
+    <div className="w-full flex flex-col">
+      <div className="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] w-full relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_3px_rgba(52,211,153,0.8)] animate-[scan_2s_ease-in-out_infinite] z-10" />
+        
+        <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse" />
+        <div className="border-b border-dashed border-gray-200 mt-4 mb-4" />
+        
+        <div className="w-full">
+          <div className="h-3 w-16 bg-gray-200 rounded mb-2 animate-pulse" />
+          <div className="h-14 w-full bg-gray-200 rounded-xl mb-4 animate-pulse" />
+        </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="h-14 w-full bg-gray-200 rounded-[12px] animate-pulse" />
-        <div className="h-14 w-full bg-gray-200 rounded-[12px] animate-pulse" />
-        <div className="h-14 w-full bg-gray-200 rounded-[12px] animate-pulse" />
+        <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+            <div className="h-3 w-12 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="h-12 w-full bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+          <div className="flex-1">
+            <div className="h-3 w-12 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="h-12 w-full bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+        </div>
+
+        <div className="w-full">
+          <div className="h-3 w-20 bg-gray-200 rounded mb-2 animate-pulse" />
+          <div className="h-12 w-full bg-gray-200 rounded-xl animate-pulse" />
+        </div>
+
+        <div className="text-center w-full pt-4">
+           <span className={"text-xs font-medium tracking-wide transition-colors duration-300 " + (isDeep ? "text-orange-500" : "text-emerald-500")}>
+             {isDeep ? "Блюдо сложное, подключаем глубокий анализ..." : statuses[statusIdx]}
+           </span>
+        </div>
       </div>
 
-      <div className="h-12 w-full bg-gray-100 rounded-[12px] animate-pulse" />
-
-      <div className="text-center w-full pt-4">
-         <span className={"text-xs font-medium tracking-wide transition-colors duration-300 " + (isDeep ? "text-orange-500" : "text-emerald-500")}>
-           {isDeep ? "Блюдо сложное, подключаем глубокий анализ..." : statuses[statusIdx]}
-         </span>
-      </div>
+      <div className="h-14 w-full bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] mt-4 animate-pulse" />
     </div>
   );
 }
