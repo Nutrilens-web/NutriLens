@@ -1,9 +1,39 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { ProgressRing } from '../components/ProgressRing';
 import { Trash2, ChevronLeft, ChevronRight, Edit2, X, Check, Star, Scale, Flame, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Meal } from '../types';
+
+function AnimatedNumber({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    let startTimestamp: number;
+    const duration = 800; // ms
+    const startValue = displayValue;
+    const endValue = value;
+
+    if (startValue === endValue) return;
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // easeOutExpo
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setDisplayValue(Math.floor(startValue + (endValue - startValue) * ease));
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setDisplayValue(endValue);
+      }
+    };
+
+    requestAnimationFrame(step);
+  }, [value, displayValue]);
+
+  return <>{displayValue}</>;
+}
 
 export function Dashboard() {
   const { settings, meals, deleteMeal, updateMeal, addFavorite, favorites, weights, addWeight } = useStore();
@@ -105,7 +135,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="flex items-center justify-between bg-white rounded-full p-1.5 shadow-sm">
+      <div className="flex items-center justify-between bg-white rounded-full p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
         <button onClick={handlePrevDay} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
           <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
@@ -147,12 +177,12 @@ export function Dashboard() {
               >
                 {showRemaining ? (
                   <>
-                    <span className="text-3xl font-light text-gray-900">{Math.max(0, settings.dailyGoal - Math.round(totalCalories))}</span>
+                    <span className="text-3xl font-light text-gray-900"><AnimatedNumber value={Math.max(0, settings.dailyGoal - Math.round(totalCalories))} /></span>
                     <span className="text-[11px] text-gray-400 mt-0.5">осталось ккал</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-3xl font-light text-gray-900">{Math.round(totalCalories)}</span>
+                    <span className="text-3xl font-light text-gray-900"><AnimatedNumber value={Math.round(totalCalories)} /></span>
                     <span className="text-[11px] text-gray-400 mt-0.5">из {settings.dailyGoal} ккал</span>
                   </>
                 )}
@@ -386,9 +416,9 @@ function MacroBar({ label, value, goal, color }: { label: string; value: number;
   return (
     <div className="flex flex-col items-center">
       <div className="text-[10px] text-gray-400 mb-0.5">{label}</div>
-      <div className="font-medium text-sm text-gray-900 mb-1.5">{Math.round(value)}г {goal && <span className="text-[10px] text-gray-400 font-normal">/ {goal}</span>}</div>
-      <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: goal ? `${percent}%` : '100%' }} />
+      <div className="font-medium text-sm text-gray-900 mb-1.5"><AnimatedNumber value={Math.round(value)} />г {goal && <span className="text-[10px] text-gray-400 font-normal">/ {goal}</span>}</div>
+      <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all duration-700 ease-out`} style={{ width: goal ? `${percent}%` : '0%' }} />
       </div>
     </div>
   );

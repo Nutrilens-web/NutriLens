@@ -50,7 +50,7 @@ export default function App() {
           <div className="relative -top-6 mx-2">
             <button
               onClick={() => setCurrentScreen('add')}
-              className="bg-emerald-500 text-white p-4 rounded-full shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:bg-emerald-600 active:scale-95 transition-all animate-[pulse_2s_ease-in-out_infinite]"
+              className="bg-emerald-500 text-white p-4 rounded-full shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:bg-emerald-600 active:scale-95 transition-all animate-[pulse-shadow_2s_ease-in-out_infinite]"
             >
               <Camera className="w-6 h-6" />
             </button>
