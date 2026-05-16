@@ -7,6 +7,18 @@ import { Bot, Loader2, AlertCircle } from 'lucide-react';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-gray-100/50">
+        <p className="text-sm font-semibold text-gray-900">{payload[0].value} <span className="text-[10px] text-gray-500 font-normal">ккал</span></p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function StatsScreen() {
   const { meals, settings, weights } = useStore();
   const [period, setPeriod] = useState<'week' | 'month'>('week');
@@ -155,7 +167,7 @@ export function StatsScreen() {
       </div>
       
       {metric === 'calories' ? (
-        <div className="bg-white rounded-[20px] p-5 shadow-sm">
+        <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
           <h3 className="text-xs font-medium text-gray-500 mb-1">Среднее за {period === 'week' ? '7 дней' : '30 дней'}</h3>
           <div className="flex items-end gap-1.5 mb-5">
             <span className="text-2xl font-light text-gray-900">{avgCalories || 0}</span>
@@ -173,11 +185,8 @@ export function StatsScreen() {
                   dy={8}
                   interval={period === 'month' ? 6 : 0}
                 />
-                <Tooltip 
-                  cursor={{ fill: '#F3F4F6', radius: 6 }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                />
-                <Bar dataKey="calories" radius={[4, 4, 4, 4]}>
+                <Tooltip cursor={{ fill: '#F3F4F6', radius: 6 }} content={<CustomTooltip />} />
+                <Bar dataKey="calories" radius={[6, 6, 6, 6]} isAnimationActive={true} animationBegin={0} animationDuration={800} animationEasing="ease-out">
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
@@ -195,7 +204,7 @@ export function StatsScreen() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-[20px] p-5 shadow-sm">
+        <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
           <h3 className="text-xs font-medium text-gray-500 mb-1">Текущий вес</h3>
           <div className="flex items-end gap-2 mb-5">
             <span className="text-2xl font-light text-gray-900">{currentWeight || '--'}</span>
@@ -243,7 +252,7 @@ export function StatsScreen() {
       )}
 
       {/* AI Health Score feature */}
-      <div className="bg-white rounded-[20px] p-5 shadow-sm mt-5">
+      <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] mt-5">
         <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <Bot className="w-4 h-4 text-emerald-500" /> 
           Анализ рациона
@@ -257,9 +266,10 @@ export function StatsScreen() {
           <button 
              onClick={handleHealthAnalysis}
              disabled={healthLoading}
-             className="w-full relative bg-gray-50 text-emerald-600 font-medium text-sm py-3 rounded-[12px] hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-2 border border-emerald-100"
+             className="relative w-full overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium text-sm py-3.5 rounded-2xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.3)] disabled:opacity-70 disabled:active:scale-100"
           >
-             {healthLoading ? <Loader2 className="w-4 h-4 animate-spin text-emerald-500" /> : 'Получить оценку от ИИ'}
+             <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.2)_50%,transparent_100%)] animate-[shimmer_2s_infinite] -skew-x-12 translate-x-[-150%]" />
+             {healthLoading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : 'Получить оценку от ИИ'}
           </button>
         )}
       </div>

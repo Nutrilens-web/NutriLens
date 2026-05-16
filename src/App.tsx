@@ -35,7 +35,7 @@ export default function App() {
 
       {/* Bottom Navigation */}
       {currentScreen !== 'add' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-50 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl">
           <button onClick={() => setCurrentScreen('dashboard')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'dashboard' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <Home className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">Дневник</span>
@@ -47,10 +47,10 @@ export default function App() {
           </button>
 
           {/* Floating Action Button for Add positioned relative to the nav */}
-          <div className="relative -top-5 mx-2">
+          <div className="relative -top-6 mx-2">
             <button
               onClick={() => setCurrentScreen('add')}
-              className="bg-emerald-500 text-white p-3.5 rounded-full shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 active:scale-95 transition-all"
+              className="bg-emerald-500 text-white p-4 rounded-full shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:bg-emerald-600 active:scale-95 transition-all animate-[pulse_2s_ease-in-out_infinite]"
             >
               <Camera className="w-6 h-6" />
             </button>

@@ -133,6 +133,8 @@ export async function analyzeMealImage(
       protein: Number(parsedJson.protein) || 0,
       fat: Number(parsedJson.fat) || 0,
       carbs: Number(parsedJson.carbs) || 0,
+      confidence_score: parsedJson.confidence_score,
+      reasoning: parsedJson.reasoning
     },
   };
 }

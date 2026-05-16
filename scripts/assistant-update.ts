@@ -1,29 +1,10 @@
-import React, { useState } from 'react';
-import { ChatScreen } from './Chat';
-import { RecommendationsScreen } from './Recommendations';
-import { GroceryScreen } from './Grocery';
-import { FridgeScannerScreen } from './FridgeScanner';
-import { MenuAnalyzerScreen } from './MenuAnalyzer';
-import { WaterTrackerScreen } from './WaterTracker';
-import { HabitAnalyzerScreen } from './HabitAnalyzer';
-import { MessageCircle, Lightbulb, ShoppingCart, ChevronLeft, Sparkles, ChefHat, Utensils, Droplets, Activity } from 'lucide-react';
+import fs from 'fs';
+import path from 'path';
 
-type Tool = 'hub' | 'chat' | 'ideas' | 'grocery' | 'fridge' | 'menu' | 'water' | 'habits';
+let content = fs.readFileSync(path.resolve('src/screens/Assistant.tsx'), 'utf-8');
 
-export function AssistantScreen() {
-  const [currentTool, setCurrentTool] = useState<Tool>('hub');
-
-  if (currentTool === 'hub') {
-    return (
-      <div className="space-y-4 pb-6">
-        <div className="flex items-center justify-between mb-2 px-1">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-emerald-500" />
-            Инструменты ИИ
-          </h2>
-        </div>
-
-        
+// Assistant grouped tools layout
+const newLayout = `
         <div className="space-y-6">
           {/* Block 1 */}
           <div>
@@ -58,7 +39,7 @@ export function AssistantScreen() {
                 </div>
                 <div className="text-left">
                   <span className="block text-sm font-semibold text-gray-800">Разбор холодильника</span>
-                  <span className="block text-[10px] text-gray-400 mt-0.5">Фото продуктов -&gt; Рецепт</span>
+                  <span className="block text-[10px] text-gray-400 mt-0.5">Фото продуктов -> Рецепт</span>
                 </div>
               </button>
             </div>
@@ -120,31 +101,9 @@ export function AssistantScreen() {
               </button>
           </div>
         </div>
+`;
 
-      </div>
-    );
-  }
+content = content.replace(/<div className="grid grid-cols-2 gap-3">[\s\S]*?<\/div>\s*<\/div>\s*\);\s*}/g, newLayout + "\n      </div>\n    );\n  }");
 
-  return (
-    <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-200">
-      <div className="flex items-center gap-2 mb-4 shrink-0">
-        <button
-          onClick={() => setCurrentTool('hub')}
-          className="p-2 -ml-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors flex items-center gap-1"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Назад к списку</span>
-        </button>
-      </div>
-      <div className="flex-1">
-        {currentTool === 'chat' && <ChatScreen />}
-        {currentTool === 'ideas' && <RecommendationsScreen />}
-        {currentTool === 'grocery' && <GroceryScreen />}
-        {currentTool === 'fridge' && <FridgeScannerScreen />}
-        {currentTool === 'menu' && <MenuAnalyzerScreen />}
-        {currentTool === 'water' && <WaterTrackerScreen />}
-        {currentTool === 'habits' && <HabitAnalyzerScreen />}
-      </div>
-    </div>
-  );
-}
+fs.writeFileSync(path.resolve('src/screens/Assistant.tsx'), content);
+console.log('Assistant updated');

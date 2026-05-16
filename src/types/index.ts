@@ -18,6 +18,8 @@ export interface Meal {
   fat: number;
   carbs: number;
   ai_thoughts: string;
+  reasoning?: string;
+  confidence_score?: number;
   images?: string[]; // Base64 array
   image?: string; // For backward compatibility
 }

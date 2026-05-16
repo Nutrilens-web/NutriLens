@@ -148,6 +148,8 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         fat: result.fat,
         carbs: result.carbs,
         ai_thoughts: result.aiThoughts,
+        reasoning: (result as any).reasoning || result.aiThoughts,
+        confidence_score: (result as any).confidence_score,
         images: thumbnails,
         image: thumbnails[0] || undefined, // For backward compatibility
       });
@@ -172,12 +174,27 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
 
       {!result ? (
         <div className="space-y-5">
-          {/* Image Capture / Preview */}
+          
+          {isAnalyzing ? (
+            <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] w-full animate-pulse space-y-4">
+              <div className="h-6 bg-gray-200 rounded-md w-1/2 mb-2"></div>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+              </div>
+              <div className="h-16 bg-gray-100 rounded-xl w-full mt-2"></div>
+            </div>
+          ) : (
+            <>
+              {/* Image Capture / Preview */}
+
           {images.length === 0 ? (
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => cameraInputRef.current?.click()}
-                className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col items-center justify-center gap-2.5 border-2 border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all aspect-square"
+                className="bg-white rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-5 flex flex-col items-center justify-center gap-2.5 border-2 border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all aspect-square"
               >
                 <Camera className="w-8 h-8 text-emerald-500" />
                 <span className="text-xs font-medium text-gray-700">
@@ -186,7 +203,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
               </button>
               <button
                 onClick={() => galleryInputRef.current?.click()}
-                className="bg-white rounded-[20px] shadow-sm p-5 flex flex-col items-center justify-center gap-2.5 border-2 border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all aspect-square"
+                className="bg-white rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-5 flex flex-col items-center justify-center gap-2.5 border-2 border-dashed border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all aspect-square"
               >
                 <ImageIcon className="w-8 h-8 text-emerald-500" />
                 <span className="text-xs font-medium text-gray-700">
@@ -195,7 +212,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
               </button>
             </div>
           ) : (
-            <div className="bg-white rounded-[20px] shadow-sm p-3">
+            <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-3">
               <div className="flex gap-2.5 overflow-x-auto pb-1.5 snap-x hide-scrollbar">
                 {images.map((img, idx) => (
                   <div
@@ -247,7 +264,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           />
 
           {/* User Input always visible */}
-          <div className="bg-white rounded-[20px] p-5 shadow-sm">
+          <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-5">
             <label className="block text-xs font-medium text-gray-700 mb-1.5">
               {images.length > 0
                 ? "Уточнение (необязательно)"
@@ -266,6 +283,9 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
             />
           </div>
 
+          </>
+          )}
+
           {error && (
             <div className="bg-red-50 text-red-600 p-3 rounded-[12px] text-xs">
               {error}
@@ -276,7 +296,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || (images.length === 0 && !userInput.trim())}
-            className="relative w-full bg-emerald-500 text-white text-sm font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 overflow-hidden disabled:opacity-70 disabled:active:scale-100 disabled:hover:bg-emerald-500"
+            className="relative w-full bg-emerald-500 text-white text-sm font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 overflow-hidden disabled:opacity-70 disabled:active:scale-100 disabled:hover:bg-emerald-500"
           >
             {isAnalyzing && (
               <div
@@ -326,7 +346,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                       });
                       onComplete();
                     }}
-                    className="w-full bg-white rounded-[16px] p-4 shadow-sm flex items-center justify-between text-left hover:bg-gray-50 active:scale-[0.98] transition-all border border-transparent hover:border-gray-100"
+                    className="w-full bg-white rounded-[16px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-between text-left hover:bg-gray-50 active:scale-[0.98] transition-all border border-transparent hover:border-gray-100"
                   >
                     <div>
                       <h4 className="font-medium text-sm text-gray-900">
@@ -348,7 +368,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
       ) : (
         /* Result Screen */
         <div className="space-y-5">
-          <div className="bg-white rounded-[20px] p-5 shadow-sm space-y-4">
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] space-y-4">
             <input
               type="text"
               value={result.name}
@@ -436,7 +456,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           </div>
 
           {/* AI Thoughts Accordion */}
-          <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
+          <div className="bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden">
             <button
               onClick={() => setShowThoughts(!showThoughts)}
               className="w-full px-5 py-3.5 flex items-center justify-between text-left"
@@ -461,7 +481,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           <div className="flex gap-3 pt-2">
             <button
               onClick={() => setResult(null)}
-              className="flex-1 bg-white text-gray-700 text-sm font-medium py-3 rounded-[12px] shadow-sm hover:bg-gray-50 active:scale-[0.98] transition-all"
+              className="flex-1 bg-white text-gray-700 text-sm font-medium py-3 rounded-[12px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:bg-gray-50 active:scale-[0.98] transition-all"
               disabled={isSaving}
             >
               Отмена
@@ -469,7 +489,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-[2] bg-emerald-500 text-white text-sm font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+              className="flex-[2] bg-emerald-500 text-white text-sm font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {isSaving ? (
                 <>
