@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useStore } from './store/useStore';
 import { Dashboard } from './screens/Dashboard';
 import { AddMeal } from './screens/AddMeal';
 import { SettingsScreen } from './screens/Settings';
@@ -11,6 +12,11 @@ export type Screen = 'dashboard' | 'add' | 'settings' | 'stats' | 'assistant';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
+  const { meals } = useStore();
+  
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const todayMealsCount = meals.filter(m => m.date === todayDateStr).length;
+  const shouldPulseFAB = todayMealsCount === 0;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-24">
@@ -50,7 +56,7 @@ export default function App() {
           <div className="relative -top-6 mx-2">
             <button
               onClick={() => setCurrentScreen('add')}
-              className="bg-emerald-500 text-white p-4 rounded-full shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:bg-emerald-600 active:scale-95 transition-all animate-[pulse-shadow_2s_ease-in-out_infinite]"
+              className={cn("bg-emerald-500 text-white p-4 rounded-full shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:bg-emerald-600 active:scale-95 transition-all", shouldPulseFAB && "animate-[pulse-shadow_2s_ease-in-out_infinite]")}
             >
               <Camera className="w-6 h-6" />
             </button>

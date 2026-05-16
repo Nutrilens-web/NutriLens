@@ -16,11 +16,12 @@ export function ProgressRing({ radius, stroke, progress, color, children }: Prog
   const clampedProgress = Math.min(Math.max(progress, 0), 100);
 
   return (
-    <div className="relative flex items-center justify-center p-2" style={{ width: radius * 2, height: radius * 2 }}>
+    <div className="relative flex items-center justify-center p-4" style={{ width: radius * 2 + 32, height: radius * 2 + 32 }}>
       <svg
         height={radius * 2}
         width={radius * 2}
-        className="transform -rotate-90"
+        viewBox={`0 0 ${radius * 2} ${radius * 2}`}
+        className="transform -rotate-90 overflow-visible"
       >
         <defs>
           <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">

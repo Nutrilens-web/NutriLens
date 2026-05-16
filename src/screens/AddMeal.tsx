@@ -14,12 +14,62 @@ import { compressImage, createThumbnail } from "../utils/image";
 import { analyzeMealImage } from "../utils/ai";
 import { v4 as uuidv4 } from "uuid";
 
+
+
+function AnalyzingSkeleton({ isDeep }: { isDeep: boolean }) {
+  const [statusIdx, setStatusIdx] = useState(0);
+  const statuses = [
+    "Подключаем нейросети...",
+    "Рассматриваем ингредиенты...",
+    "Ищем скрытые жиры...",
+    "Считаем каждую калорию...",
+    "Почти готово..."
+  ];
+
+  React.useEffect(() => {
+    const int = setInterval(() => {
+      setStatusIdx(i => (i + 1) % statuses.length);
+    }, 1200);
+    return () => clearInterval(int);
+  }, []);
+
+  return (
+    <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] w-full flex flex-col gap-4">
+      <div className="flex gap-4 items-start">
+        <div className="w-24 h-24 rounded-[16px] bg-gray-100 overflow-hidden relative shrink-0 shadow-inner">
+          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_3px_rgba(52,211,153,0.8)] animate-[scan_2s_ease-in-out_infinite]" />
+        </div>
+        
+        <div className="flex-1 space-y-3 py-1">
+          <div className="space-y-2 mb-2">
+            <div className="h-4 bg-gray-200 rounded w-full animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+          </div>
+          
+          <div className="flex gap-2 pt-2">
+            <div className="h-5 bg-gray-100 rounded flex-1 animate-pulse" />
+            <div className="h-5 bg-gray-100 rounded flex-1 animate-pulse" />
+            <div className="h-5 bg-gray-100 rounded flex-1 animate-pulse" />
+          </div>
+        </div>
+      </div>
+      
+      <div className="text-center w-full pt-2">
+         <span className={"text-xs font-medium tracking-wide transition-colors duration-300 " + (isDeep ? "text-orange-500" : "text-emerald-500")}>
+           {isDeep ? "Блюдо сложное, подключаем глубокий анализ..." : statuses[statusIdx]}
+         </span>
+      </div>
+    </div>
+  )
+}
 export function AddMeal({ onComplete }: { onComplete: () => void }) {
   const { settings, addMeal, favorites, meals } = useStore();
   const [images, setImages] = useState<string[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isDeepAnalyze, setIsDeepAnalyze] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,10 +140,20 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     setProgressMsg("");
     setError(null);
 
+    setIsDeepAnalyze(false);
+    
     let currentProgress = 0;
     const progressInterval = setInterval(() => {
-      currentProgress += (95 - currentProgress) * 0.15;
-      setLoadingProgress(Math.round(currentProgress));
+      setLoadingProgress((prev) => {
+        let step = 0;
+        if (prev < 20) step = 8;
+        else if (prev < 75) step = Math.max(0.2, (75 - prev) * 0.05);
+        else step = 0.2;
+        
+        const next = Math.min(prev + step, 95);
+        currentProgress = next;
+        return next;
+      });
     }, 200);
 
     // Prepare recent meals context
@@ -112,14 +172,22 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         settings.userContext,
         userInput,
         recentMealsText,
-        (msg) => setProgressMsg(msg)
+        (msg) => {
+          setProgressMsg(msg);
+          if (msg.includes("глубокий анализ")) {
+            setIsDeepAnalyze(true);
+            setLoadingProgress(50);
+            currentProgress = 50;
+          }
+        }
       );
-      setResult({ ...aiResult, aiThoughts });
+      setLoadingProgress(100);
+      setTimeout(() => setResult({ ...aiResult, aiThoughts }), 300);
     } catch (err: any) {
       setError(err.message || "Произошла ошибка при анализе");
     } finally {
       clearInterval(progressInterval);
-      setIsAnalyzing(false);
+      setTimeout(() => setIsAnalyzing(false), 300);
     }
   };
 
@@ -176,16 +244,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         <div className="space-y-5">
           
           {isAnalyzing ? (
-            <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)] w-full animate-pulse space-y-4">
-              <div className="h-6 bg-gray-200 rounded-md w-1/2 mb-2"></div>
-              <div className="grid grid-cols-2 gap-3 mb-2">
-                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
-                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
-                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
-                <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
-              </div>
-              <div className="h-16 bg-gray-100 rounded-xl w-full mt-2"></div>
-            </div>
+            <AnalyzingSkeleton isDeep={isDeepAnalyze} />
           ) : (
             <>
               {/* Image Capture / Preview */}
@@ -300,7 +359,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           >
             {isAnalyzing && (
               <div
-                className="absolute left-0 top-0 bottom-0 bg-emerald-600 transition-all duration-200"
+                className={"absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out " + (isDeepAnalyze ? "bg-orange-500" : "bg-emerald-600")}
                 style={{ width: `${loadingProgress}%` }}
               />
             )}

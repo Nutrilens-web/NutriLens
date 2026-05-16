@@ -1,9 +1,15 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@keyframes scan {
+  0% { transform: translateY(-10%); }
+  50% { transform: translateY(110%); }
+  100% { transform: translateY(-10%); }
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply bg-gray-50 text-gray-900 font-sans overflow-x-hidden w-full overscroll-y-none;
   }
 }
 
@@ -18,8 +24,9 @@
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-150%) skewX(-12deg); }
-  100% { transform: translateX(150%) skewX(-12deg); }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 @keyframes pulse-shadow {

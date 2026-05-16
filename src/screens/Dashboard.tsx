@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { ProgressRing } from '../components/ProgressRing';
+import { cn } from '../utils/cn';
 import { Trash2, ChevronLeft, ChevronRight, Edit2, X, Check, Star, Scale, Flame, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Meal } from '../types';
@@ -46,6 +47,10 @@ export function Dashboard() {
   
   const todayWeight = weights.find(w => w.date === selectedDate)?.weight || '';
   const [weightInput, setWeightInput] = useState(todayWeight.toString());
+
+  const latestWeight = weights.length > 0 ? [...weights].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
+  const daysSinceLastWeightUpdate = latestWeight ? Math.floor((new Date().getTime() - new Date(latestWeight.date).getTime()) / (1000 * 3600 * 24)) : Infinity;
+  const weightReminder = daysSinceLastWeightUpdate >= 7;
 
   const handlePrevDay = () => {
     const d = new Date(selectedDate);
@@ -155,13 +160,13 @@ export function Dashboard() {
       <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex flex-col items-center relative">
         <button 
           onClick={() => {
-            setWeightInput(todayWeight.toString());
+            setWeightInput(todayWeight.toString() || (latestWeight?.weight.toString() || ''));
             setShowWeightModal(true);
           }}
-          className="absolute top-4 right-4 flex flex-col items-center gap-1 text-gray-400 hover:text-emerald-500 transition-colors"
+          className={cn("absolute top-4 right-4 flex flex-col items-center gap-1 transition-colors", weightReminder ? "text-red-500 animate-pulse hover:text-red-600" : "text-gray-400 hover:text-emerald-500")}
         >
           <Scale className="w-5 h-5" />
-          <span className="text-[10px] font-medium">{todayWeight ? `${Math.round(Number(todayWeight) * 10) / 10} кг` : 'Вес'}</span>
+          <span className="text-[10px] font-medium">{todayWeight ? `${Math.round(Number(todayWeight) * 10) / 10} кг` : (weightReminder ? 'Взвесьтесь!' : 'Вес')}</span>
         </button>
 
         <button onClick={() => setShowRemaining(!showRemaining)} className="outline-none active:scale-95 transition-transform">
@@ -214,25 +219,30 @@ export function Dashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}>
                 {meal.images && meal.images.length > 0 ? (
-                  <img src={meal.images[0]} alt={meal.name} className="w-12 h-12 rounded-[10px] object-cover bg-gray-100" />
+                  <img src={meal.images[0]} alt={meal.name} className="w-12 h-12 rounded-[10px] object-cover bg-gray-100 shrink-0" />
                 ) : meal.image ? (
-                  <img src={meal.image} alt={meal.name} className="w-12 h-12 rounded-[10px] object-cover bg-gray-100" />
+                  <img src={meal.image} alt={meal.name} className="w-12 h-12 rounded-[10px] object-cover bg-gray-100 shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-[10px] bg-gray-100 flex items-center justify-center text-base">🍽️</div>
+                  <div className="w-12 h-12 rounded-[10px] bg-gray-100 flex items-center justify-center text-base shrink-0">🍽️</div>
                 )}
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-1.5 pr-2"><h3 className="font-medium text-sm text-gray-900 truncate">{meal.name}</h3>{meal.confidence_score && meal.confidence_score < 7 && (<button onClick={(e) => { e.stopPropagation(); setWarningMeal(meal); }} className="shrink-0 bg-yellow-100 text-yellow-600 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider uppercase flex items-center gap-1" title="ИИ не уверен в точности"><AlertTriangle className="w-2.5 h-2.5"/> AI</button>)}</div>
-                    <span className="text-[10px] text-gray-400 whitespace-nowrap pt-0.5">{meal.time}</span>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                      <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight flex-1">{meal.name}</h3>
+                      {meal.confidence_score && meal.confidence_score < 7 && (
+                         <button onClick={(e) => { e.stopPropagation(); setWarningMeal(meal); }} className="shrink-0 bg-yellow-100 text-yellow-600 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5" title="ИИ не уверен в точности"><AlertTriangle className="w-2.5 h-2.5"/> AI</button>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap pt-0.5 shrink-0">{meal.time}</span>
                   </div>
-                  <p className="text-xs text-emerald-600 font-medium mt-0.5">{meal.calories} ккал</p>
+                  <p className="text-xs text-emerald-600 font-medium mt-1">{meal.calories} ккал</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">
                     Б: {meal.protein}г • Ж: {meal.fat}г • У: {meal.carbs}г
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-1 pr-1">
+                <div className="flex flex-col gap-1 shrink-0">
                   {!isFavorite(meal) && (
                     <button 
                       onClick={() => handleAddFavorite(meal)}

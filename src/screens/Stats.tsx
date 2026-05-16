@@ -46,18 +46,22 @@ export function StatsScreen() {
         ? d.toLocaleDateString('ru-RU', { weekday: 'short' }) 
         : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
       
-      days.push({
-        name: label,
-        calories: Math.round(cals),
-        protein: Math.round(protein),
-        fat: Math.round(fat),
-        carbs: Math.round(carbs),
-        weight: weightLog ? weightLog.weight : null,
-        date: dateStr,
-        isToday: i === 0,
-        isOver: cals > settings.dailyGoal,
-        mealsList: dayMeals.map(m => m.name).join(', ')
-      });
+        const status = cals <= settings.dailyGoal 
+          ? 'normal' 
+          : (cals <= settings.dailyGoal + 200 ? 'warning' : 'over');
+
+        days.push({
+          name: label,
+          calories: Math.round(cals),
+          protein: Math.round(protein),
+          fat: Math.round(fat),
+          carbs: Math.round(carbs),
+          weight: weightLog ? weightLog.weight : null,
+          date: dateStr,
+          isToday: i === 0,
+          status,
+          mealsList: dayMeals.map(m => m.name).join(', ')
+        });
     }
     
     if (metric === 'weight') {
@@ -176,7 +180,7 @@ export function StatsScreen() {
 
           <div className="h-40 w-full -ml-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <BarChart key={period} data={chartData}>
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
@@ -189,8 +193,8 @@ export function StatsScreen() {
                 <Bar dataKey="calories" radius={[6, 6, 6, 6]} isAnimationActive={true} animationBegin={0} animationDuration={800} animationEasing="ease-out">
                   {chartData.map((entry, index) => (
                     <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.isOver ? '#F87171' : (entry.isToday ? '#10B981' : '#34D399')} 
+                      key={entry.date} 
+                      fill={entry.status === 'over' ? '#F87171' : entry.status === 'warning' ? '#F59E0B' : (entry.isToday ? '#10B981' : '#34D399')} 
                     />
                   ))}
                 </Bar>
@@ -198,9 +202,9 @@ export function StatsScreen() {
             </ResponsiveContainer>
           </div>
           <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400 border-t border-gray-50 pt-3 px-2">
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#10B981]"></div>Сегодня</div>
             <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#34D399]"></div>В норме</div>
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#F87171]"></div>Превышение</div>
+            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#F59E0B]"></div>Легкое превышение</div>
+            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-[#F87171]"></div>Критическое</div>
           </div>
         </div>
       ) : (
@@ -266,9 +270,8 @@ export function StatsScreen() {
           <button 
              onClick={handleHealthAnalysis}
              disabled={healthLoading}
-             className="relative w-full overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium text-sm py-3.5 rounded-2xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.3)] disabled:opacity-70 disabled:active:scale-100"
+             className="relative w-full overflow-hidden bg-[linear-gradient(110deg,#10b981,45%,#34d399,55%,#10b981)] bg-[length:200%_200%] text-white font-medium text-sm py-3.5 rounded-2xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.3)] disabled:opacity-70 disabled:active:scale-100 animate-[shimmer_3s_linear_infinite]"
           >
-             <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.2)_50%,transparent_100%)] animate-[shimmer_2s_infinite] -skew-x-12 translate-x-[-150%]" />
              {healthLoading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : 'Получить оценку от ИИ'}
           </button>
         )}
