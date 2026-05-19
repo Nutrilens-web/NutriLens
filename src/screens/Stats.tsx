@@ -101,7 +101,12 @@ export function StatsScreen() {
       
       const response = await ai.models.generateContent({
          model: 'gemini-2.5-flash',
-         contents: prompt,
+         contents: [
+           {
+             role: "user",
+             parts: [{ text: prompt }]
+           }
+         ],
          config: {
            safetySettings: [
              {
@@ -124,8 +129,9 @@ export function StatsScreen() {
          }
       });
       setHealthScore(response.text || "Не смог сформировать оценку.");
-    } catch (e) {
-      setHealthScore('Ошибка анализа. Проверьте API ключ.');
+    } catch (e: any) {
+      console.error(e);
+      setHealthScore(`Ошибка анализа: ${e?.message || 'Проверьте API ключ.'}`);
     } finally {
       setHealthLoading(false);
     }
