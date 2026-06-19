@@ -75,26 +75,30 @@ export function useStore() {
     };
 
     if (!trySave(updated)) {
-      console.warn('Недостаточно памяти на устройстве. Прием пищи сохранен без фото.');
-      const mealWithoutImages = { ...meal, images: [], image: undefined };
-      updated = [mealWithoutImages, ...currentMeals];
+      console.warn('Недостаточно памяти на устройстве. Пытаемся освободить место, удаляя старые фото...');
       
-      if (!trySave(updated)) {
-        // Strip images from oldest to newest until it fits
-        console.warn('Память все еще переполнена, удаляем старые фото.');
-        
-        // Ensure we iterate from oldest (end of array) to newest
-        for (let i = updated.length - 1; i >= 1; i--) {
-          if (updated[i].images?.length || updated[i].image) {
-            updated[i] = { ...updated[i], images: [], image: undefined };
-            if (trySave(updated)) {
-              break;
-            }
+      let tempMeals = [...currentMeals];
+      let savedSuccessfully = false;
+
+      // Удаляем фотографии от старых к новым, чтобы сохранить фото нового приема пищи
+      for (let i = tempMeals.length - 1; i >= 0; i--) {
+        if (tempMeals[i].images?.length || tempMeals[i].image) {
+          tempMeals[i] = { ...tempMeals[i], images: [], image: undefined };
+          updated = [meal, ...tempMeals];
+          if (trySave(updated)) {
+            savedSuccessfully = true;
+            break;
           }
         }
+      }
 
-        // If it still fails, aggressively prune oldest meals
+      if (!savedSuccessfully) {
+        console.warn('Память все еще переполнена, сохраняем новый прием пищи без фото.');
+        const mealWithoutImages = { ...meal, images: [], image: undefined };
+        updated = [mealWithoutImages, ...tempMeals];
+        
         if (!trySave(updated)) {
+          // Если все еще переполнено, удаляем старые записи до 30 штук
           while (updated.length > 30 && !trySave(updated)) {
             updated.pop();
           }
@@ -124,17 +128,34 @@ export function useStore() {
     };
 
     if (!trySave(updated)) {
-      console.warn('Память переполнена, удаляем старые фото для сохранения.');
+      console.warn('Память переполнена при обновлении. Пытаемся освободить место, удаляя старые фото...');
+      let savedSuccessfully = false;
+      
+      // Удаляем фотографии из ДРУГИХ старых блюд
       for (let i = updated.length - 1; i >= 0; i--) {
-        if (updated[i].images?.length || updated[i].image) {
+        if (updated[i].id !== id && (updated[i].images?.length || updated[i].image)) {
           updated[i] = { ...updated[i], images: [], image: undefined };
           if (trySave(updated)) {
+            savedSuccessfully = true;
             break;
           }
         }
       }
+
+      // Если все еще мало места, удаляем фото самого обновляемого блюда
+      if (!savedSuccessfully) {
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].id === id && (updated[i].images?.length || updated[i].image)) {
+            updated[i] = { ...updated[i], images: [], image: undefined };
+            if (trySave(updated)) {
+              savedSuccessfully = true;
+              break;
+            }
+          }
+        }
+      }
       
-      if (!trySave(updated)) {
+      if (!savedSuccessfully) {
          while (updated.length > 30 && !trySave(updated)) {
            updated.pop();
          }
