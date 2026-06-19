@@ -1,8 +1,8 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState } from 'react';
 import { Sparkles, Droplets, Plus, Minus } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 
 export function WaterTrackerScreen() {
@@ -13,14 +13,15 @@ export function WaterTrackerScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const getWaterAdvice = async () => {
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       const prompt = `Пользователь: ${settings.userContext}.
 Проанализируй эти данные и:
 1. Вычисли рекомендуемую индивидуальную норму воды в день (в литрах и стаканах).

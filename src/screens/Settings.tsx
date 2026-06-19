@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { ArrowLeft, Trash2, Download, Upload } from 'lucide-react';
+import { getLocalDateString } from '../utils/date';
 
 export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const { settings, setSettings } = useStore();
@@ -31,7 +32,7 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `nutrilens_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `nutrilens_backup_${getLocalDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -78,7 +79,21 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
             className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
             placeholder="AIzaSy..."
           />
-          <p className="text-[10px] text-gray-400 mt-1.5">Хранится только на вашем устройстве.</p>
+          <p className="text-[10px] text-gray-400 mt-1.5">Хранится только на вашем устройстве. Нужен для бесплатного режима.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">
+            Ключ NanoGPT
+          </label>
+          <input
+            type="password"
+            value={localSettings.nanoApiKey || ''}
+            onChange={(e) => setLocalSettings({ ...localSettings, nanoApiKey: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+            placeholder="sk-nano-..."
+          />
+          <p className="text-[10px] text-gray-400 mt-1.5">Нужен для режимов «Простой» и «Продвинутый». Хранится только на вашем устройстве.</p>
         </div>
 
         <div>

@@ -1,11 +1,12 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, YAxis } from 'recharts';
 import { cn } from '../utils/cn';
-import { Bot, Loader2, AlertCircle } from 'lucide-react';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { Bot, Loader2 } from 'lucide-react';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
+import { getLocalDateString } from '../utils/date';
 
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -33,7 +34,7 @@ export function StatsScreen() {
     for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(d);
       
       const dayMeals = meals.filter(m => m.date === dateStr);
       const cals = dayMeals.reduce((sum, m) => sum + m.calories, 0);
@@ -42,8 +43,8 @@ export function StatsScreen() {
       const carbs = dayMeals.reduce((sum, m) => sum + m.carbs, 0);
       
       const weightLog = weights.find(w => w.date === dateStr);
-      const label = period === 'week' 
-        ? d.toLocaleDateString('ru-RU', { weekday: 'short' }) 
+      const label = period === 'week'
+        ? d.toLocaleDateString('ru-RU', { weekday: 'short' })
         : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
       
         const status = cals <= settings.dailyGoal 
@@ -84,8 +85,9 @@ export function StatsScreen() {
   const weightChange = currentWeight - oldWeight;
 
   const handleHealthAnalysis = async () => {
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setHealthScore("Сначала укажите API ключ в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setHealthScore(keyError);
       return;
     }
     setHealthLoading(true);
@@ -96,7 +98,7 @@ export function StatsScreen() {
     ).join('\n');
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       const prompt = `Проанализируй рацион за последние дни:\n${recentData}\n\nЦель пользователя: ${settings.dailyGoal} ккал/день.\n\nДай оценку от 1 до 10 (где 10 - идеально) и 2-3 коротких конструктивных совета по улучшению нутриентов/выбора блюд. Отвечай коротко и только по делу.`;
       
       const response = await ai.models.generateContent({

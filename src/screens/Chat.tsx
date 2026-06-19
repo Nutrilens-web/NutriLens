@@ -1,9 +1,10 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Send, Loader2, Bot, Image as ImageIcon, X, Camera } from 'lucide-react';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { compressImage } from '../utils/image';
+import { getLocalDateString } from '../utils/date';
 import Markdown from 'react-markdown';
 
 export function ChatScreen() {
@@ -64,9 +65,10 @@ export function ChatScreen() {
 
   const handleSend = async () => {
     if ((!input.trim() && selectedImages.length === 0) || isLoading) return;
-    
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError('Сначала укажите API Ключ Gemini в настройках');
+
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
     setError(null);
@@ -78,9 +80,9 @@ export function ChatScreen() {
     setIsLoading(true);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       const todayMeals = meals.filter(m => m.date === today);
       
       const systemContext = `Ты дружелюбный и профессиональный ИИ-диетолог.
@@ -89,12 +91,7 @@ export function ChatScreen() {
 Съедено сегодня: ${todayMeals.map(m => m.name + ' (' + m.calories + 'ккал)').join(', ')} / За день: ${todayMeals.reduce((acc, m) => acc + m.calories, 0)} ккал.
 Старайся давать короткие, емкие и поддерживающие ответы.`;
 
-      const history = newMessages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.text }]
-      }));
-
-      // Restore history via manual messages (using send_message or just generating content with full history)
+      // Восстанавливаем историю сообщений для генерации с полным контекстом.
       const fullHistory = [
         ...newMessages.map(m => {
           const parts: any[] = [];

@@ -1,5 +1,5 @@
-import { getAI } from './ai-wrapper';
-import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { getAI, getAIForSettings, getApiKeyError } from './ai-wrapper';
+import { Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { Settings } from '../types';
 
 export async function analyzeMealImage(
@@ -11,10 +11,9 @@ export async function analyzeMealImage(
   onProgress?: (msg: string) => void
 ) {
   const mode = settings.apiMode || 'free';
-  if (mode === 'free' && !settings.apiKey) {
-    throw new Error(
-      "API ключ не указан. Пожалуйста, добавьте его в настройках."
-    );
+  const keyError = getApiKeyError(settings);
+  if (keyError) {
+    throw new Error(keyError);
   }
 
   const prompt = `Ты высокоточный эксперт-диетолог и анализатор еды. Твоя задача - определить КБЖУ (калории, белки, жиры, углеводы) СУММАРНО для ВСЕХ продуктов или блюд, представленных на фотографиях и/или описанных в тексте.
@@ -45,12 +44,7 @@ export async function analyzeMealImage(
   const parts = [{ text: prompt }, ...imageParts];
 
   const callModel = async (modelName: string) => {
-    const isNano = mode !== 'free';
-    const ai = getAI({ 
-      apiKey: settings.apiKey || 'dummy', 
-      useNanoGPTOnly: isNano, 
-      nanoModel: isNano ? modelName : undefined
-    });
+    const ai = getAIForSettings(settings);
 
     try {
       const response = await ai.models.generateContent({
@@ -146,14 +140,10 @@ export async function getRecommendations(
   remainingCalories: number,
   recentMealsContext: string = "",
 ) {
-  if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-    throw new Error(
-      "API ключ не указан. Пожалуйста, добавьте его в настройках.",
-    );
-  }
+  const keyError = getApiKeyError(settings);
+  if (keyError) throw new Error(keyError);
 
-  const ai = getAI({ 
-    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
+  const ai = getAIForSettings(settings);
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -248,9 +238,9 @@ export async function getRecommendations(
 }
 
 export async function getDetailedRecipe(settings: Settings, recipePrompt: string) {
-  if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) throw new Error("API ключ не указан.");
-  const ai = getAI({ 
-    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
+  const keyError = getApiKeyError(settings);
+  if (keyError) throw new Error(keyError);
+  const ai = getAIForSettings(settings);
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
@@ -290,8 +280,7 @@ ${recipePrompt}
 }
 
 export async function generateGroceryList(settings: Settings, userContext: string, dailyGoal: number, preferences: string) {
-  const ai = getAI({ 
-    apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite"});
+  const ai = getAIForSettings(settings);
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}

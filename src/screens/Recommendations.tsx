@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useStore } from "../store/useStore";
 import { getRecommendations, getDetailedRecipe } from "../utils/ai";
+import { getApiKeyError } from "../utils/ai-wrapper";
 import {
   Loader2,
-  ChevronRight,
   Lightbulb,
   Search,
   BookOpen,
   X,
 } from "lucide-react";
+import { getLocalDateString } from "../utils/date";
 
 export function RecommendationsScreen() {
   const { settings, meals } = useStore();
@@ -33,14 +34,15 @@ export function RecommendationsScreen() {
   const [recipeProgress, setRecipeProgress] = useState(0);
 
   // Calculate remaining calories today
-  const selectedDate = new Date().toISOString().split("T")[0];
+  const selectedDate = getLocalDateString();
   const currentMeals = meals.filter((m) => m.date === selectedDate);
   const totalCalories = currentMeals.reduce((sum, m) => sum + m.calories, 0);
   const remainingCalories = Math.max(0, settings.dailyGoal - totalCalories);
 
   const handleSearch = async () => {
-    if (!settings.apiKey) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
     setError(null);

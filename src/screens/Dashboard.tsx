@@ -1,37 +1,48 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { ProgressRing } from '../components/ProgressRing';
 import { cn } from '../utils/cn';
 import { Trash2, ChevronLeft, ChevronRight, Edit2, X, Check, Star, Scale, Flame, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Meal } from '../types';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 function AnimatedNumber({ value }: { value: number }) {
   const [displayValue, setDisplayValue] = useState(value);
+  const fromRef = useRef(value);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    let startTimestamp: number;
     const duration = 800; // ms
-    const startValue = displayValue;
+    const startValue = fromRef.current;
     const endValue = value;
 
     if (startValue === endValue) return;
 
+    let startTimestamp: number | null = null;
+
     const step = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
+      if (startTimestamp === null) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       // easeOutExpo
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       setDisplayValue(Math.floor(startValue + (endValue - startValue) * ease));
       if (progress < 1) {
-        requestAnimationFrame(step);
+        rafRef.current = requestAnimationFrame(step);
       } else {
+        fromRef.current = endValue;
         setDisplayValue(endValue);
       }
     };
 
-    requestAnimationFrame(step);
-  }, [value, displayValue]);
+    rafRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [value]);
 
   return <>{displayValue}</>;
 }
@@ -39,7 +50,7 @@ function AnimatedNumber({ value }: { value: number }) {
 export function Dashboard() {
   const { settings, meals, deleteMeal, updateMeal, addFavorite, favorites, weights, addWeight } = useStore();
   
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showRemaining, setShowRemaining] = useState(false);
@@ -48,25 +59,26 @@ export function Dashboard() {
   const todayWeight = weights.find(w => w.date === selectedDate)?.weight || '';
   const [weightInput, setWeightInput] = useState(todayWeight.toString());
 
-  const latestWeight = weights.length > 0 ? [...weights].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] : null;
-  const daysSinceLastWeightUpdate = latestWeight ? Math.floor((new Date().getTime() - new Date(latestWeight.date).getTime()) / (1000 * 3600 * 24)) : Infinity;
+  const latestWeight = weights.length > 0 ? [...weights].sort((a,b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime())[0] : null;
+  const daysSinceLastWeightUpdate = latestWeight ? Math.floor((new Date().getTime() - parseLocalDate(latestWeight.date).getTime()) / (1000 * 3600 * 24)) : Infinity;
   const weightReminder = daysSinceLastWeightUpdate >= 7;
 
   const handlePrevDay = () => {
-    const d = new Date(selectedDate);
+    const d = parseLocalDate(selectedDate);
     d.setDate(d.getDate() - 1);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString(d));
   };
   
   const handleNextDay = () => {
-    const d = new Date(selectedDate);
+    const d = parseLocalDate(selectedDate);
     d.setDate(d.getDate() + 1);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString(d));
   };
 
   const currentMeals = meals.filter(m => m.date === selectedDate);
-  const isToday = selectedDate === new Date().toISOString().split('T')[0];
-  const displayDate = new Date(selectedDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const todayStr = getLocalDateString();
+  const isToday = selectedDate === todayStr;
+  const displayDate = parseLocalDate(selectedDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
   const totalCalories = currentMeals.reduce((sum, m) => sum + m.calories, 0);
   const totalProtein = currentMeals.reduce((sum, m) => sum + m.protein, 0);
@@ -77,26 +89,26 @@ export function Dashboard() {
 
   const streak = useMemo(() => {
     if (meals.length === 0) return 0;
-    const dates = [...new Set(meals.map(m => m.date))].sort((a,b) => b.localeCompare(a));
+    const dates = new Set(meals.map(m => m.date));
     let currentStreak = 0;
     const today = new Date();
     today.setHours(0,0,0,0);
     
     let checkDay = new Date(today);
-    let todayStr = checkDay.toISOString().split('T')[0];
+    let todayStr = getLocalDateString(checkDay);
     
-    if (dates.includes(todayStr)) {
+    if (dates.has(todayStr)) {
       currentStreak++;
     } else {
       checkDay.setDate(checkDay.getDate() - 1);
-      let yesterdayStr = checkDay.toISOString().split('T')[0];
-      if (!dates.includes(yesterdayStr)) return 0; // Lost streak
+      let yesterdayStr = getLocalDateString(checkDay);
+      if (!dates.has(yesterdayStr)) return 0; // Lost streak
     }
 
     while (true) {
       checkDay.setDate(checkDay.getDate() - 1);
-      let dateStr = checkDay.toISOString().split('T')[0];
-      if (dates.includes(dateStr)) {
+      let dateStr = getLocalDateString(checkDay);
+      if (dates.has(dateStr)) {
         currentStreak++;
       } else {
         break;

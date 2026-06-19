@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "nutrilens",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "prebuild": "pwa-assets-generator --preset minimal public/icon.svg",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

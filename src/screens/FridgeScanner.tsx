@@ -1,10 +1,11 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState, useRef } from 'react';
 import { Camera, ImagePlus, Sparkles, ChefHat, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 import { compressImage } from '../utils/image';
+import { getLocalDateString } from '../utils/date';
 
 export function FridgeScannerScreen() {
   const { settings, meals } = useStore();
@@ -18,7 +19,7 @@ export function FridgeScannerScreen() {
   const [useRemainingCalories, setUseRemainingCalories] = useState(true);
 
   const todayCalories = meals
-    .filter(m => m.date === new Date().toISOString().split('T')[0])
+    .filter(m => m.date === getLocalDateString())
     .reduce((acc, m) => acc + m.calories, 0);
   const remainingCalories = Math.max(0, settings.dailyGoal - todayCalories);
 
@@ -49,8 +50,9 @@ export function FridgeScannerScreen() {
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
 
@@ -58,7 +60,7 @@ export function FridgeScannerScreen() {
     setError(null);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       const prompt = `Посмотри на фото продуктов (содержимое холодильника или стола). 
 Пользователь: ${settings.userContext}.${useRemainingCalories ? ` Цель на день: ${settings.dailyGoal} ккал. Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Предложи 3 здоровых рецепта из того, что ты видишь${useRemainingCalories ? ', стараясь вписаться в оставшиеся калории (если их много - можно сытнее, если мало - более легкие)' : ''}. Для каждого рецепта:

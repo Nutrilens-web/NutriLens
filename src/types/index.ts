@@ -1,5 +1,6 @@
 export interface Settings {
   apiKey: string;
+  nanoApiKey?: string;
   dailyGoal: number;
   userContext: string;
   proteinGoal?: number;

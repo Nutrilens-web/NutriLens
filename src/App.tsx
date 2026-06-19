@@ -7,6 +7,7 @@ import { StatsScreen } from './screens/Stats';
 import { AssistantScreen } from './screens/Assistant';
 import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles } from 'lucide-react';
 import { cn } from './utils/cn';
+import { getLocalDateString } from './utils/date';
 
 export type Screen = 'dashboard' | 'add' | 'settings' | 'stats' | 'assistant';
 
@@ -14,7 +15,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const { meals } = useStore();
   
-  const todayDateStr = new Date().toISOString().split('T')[0];
+  const todayDateStr = getLocalDateString();
   const todayMealsCount = meals.filter(m => m.date === todayDateStr).length;
   const shouldPulseFAB = todayMealsCount === 0;
 

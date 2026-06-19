@@ -1,10 +1,11 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState, useRef } from 'react';
 import { Camera, ImagePlus, Sparkles, Utensils, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 import { compressImage } from '../utils/image';
+import { getLocalDateString } from '../utils/date';
 
 export function MenuAnalyzerScreen() {
   const { settings, meals } = useStore();
@@ -18,7 +19,7 @@ export function MenuAnalyzerScreen() {
   const [useRemainingCalories, setUseRemainingCalories] = useState(true);
 
   const todayCalories = meals
-    .filter(m => m.date === new Date().toISOString().split('T')[0])
+    .filter(m => m.date === getLocalDateString())
     .reduce((acc, m) => acc + m.calories, 0);
   const remainingCalories = Math.max(0, settings.dailyGoal - todayCalories);
 
@@ -48,8 +49,9 @@ export function MenuAnalyzerScreen() {
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
 
@@ -57,7 +59,7 @@ export function MenuAnalyzerScreen() {
     setError(null);
 
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       const prompt = `Посмотри на фото меню из ресторана/кафе.
 Пользователь: ${settings.userContext}. Лимит калорий: ${settings.dailyGoal} в день.${useRemainingCalories ? ` Свободно на сегодня: ${remainingCalories} ккал.` : ''}
 Твоя задача — помочь пользователю выбрать блюда${useRemainingCalories ? ', учитывая остаток калорий' : ''}:

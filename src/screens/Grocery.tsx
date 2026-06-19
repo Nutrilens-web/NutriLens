@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { generateGroceryList } from '../utils/ai';
+import { getApiKeyError } from '../utils/ai-wrapper';
 import { Loader2, ShoppingCart, Trash2, CheckSquare, Square } from 'lucide-react';
 import Markdown from 'react-markdown';
 
@@ -11,8 +12,9 @@ export function GroceryScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    if (!settings.apiKey) {
-      setError('Укажите API ключ Gemini в настройках');
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
     setError(null);

@@ -1,8 +1,8 @@
-import { getAI } from '../utils/ai-wrapper';
+import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState } from 'react';
 import { Sparkles, Activity, Target } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 
 export function HabitAnalyzerScreen() {
@@ -14,14 +14,15 @@ export function HabitAnalyzerScreen() {
 
   const getAnalysis = async () => {
     if (!habit.trim()) return;
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const ai = getAI({ apiKey: settings.apiKey, useNanoGPTOnly: settings.apiMode && settings.apiMode !== "free", nanoModel: settings.apiMode === "advanced" ? "google/gemini-3-flash-preview-thinking" : "google/gemini-3.1-flash-lite" });
+      const ai = getAIForSettings(settings);
       const prompt = `Пользователь: ${settings.userContext}.
 У пользователя есть следующая привычка или проблема с питанием: "${habit}".
 

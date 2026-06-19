@@ -13,6 +13,8 @@ import {
 import { compressImage, createThumbnail } from "../utils/image";
 import { analyzeMealImage } from "../utils/ai";
 import { v4 as uuidv4 } from "uuid";
+import { getLocalDateString } from "../utils/date";
+import { getApiKeyError } from "../utils/ai-wrapper";
 
 
 
@@ -109,19 +111,15 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
 
       setImages((prev) => {
         const combined = [...prev, ...compressedImages];
-        if (combined.length > 10) {
-          setTimeout(
-            () =>
-              setError(
-                "Загружено первые 10 фото (это максимум для одного блюда)",
-              ),
-            0,
-          );
-          return combined.slice(0, 10);
-        }
-        setTimeout(() => setError(null), 0);
-        return combined;
+        return combined.length > 10 ? combined.slice(0, 10) : combined;
       });
+      // Side effects вынесены из функции-updater'а setState, чтобы не
+      // запускать их во время рендера.
+      if (images.length + compressedImages.length > 10) {
+        setError("Загружено первые 10 фото (это максимум для одного блюда)");
+      } else {
+        setError(null);
+      }
       setResult(null);
     } catch (err) {
       setError("Ошибка при обработке фото");
@@ -140,8 +138,9 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
       setError("Добавьте фото или опишите еду текстом");
       return;
     }
-    if (!settings.apiKey && (!settings.apiMode || settings.apiMode === "free")) {
-      setError("Укажите API ключ Gemini в настройках");
+    const keyError = getApiKeyError(settings);
+    if (keyError) {
+      setError(keyError);
       return;
     }
 
@@ -215,7 +214,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
       const now = new Date();
       addMeal({
         id: uuidv4(),
-        date: now.toISOString().split("T")[0],
+        date: getLocalDateString(now),
         time: now.toLocaleTimeString("ru-RU", {
           hour: "2-digit",
           minute: "2-digit",
@@ -401,7 +400,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                       const now = new Date();
                       addMeal({
                         id: uuidv4(),
-                        date: now.toISOString().split("T")[0],
+                        date: getLocalDateString(now),
                         time: now.toLocaleTimeString("ru-RU", {
                           hour: "2-digit",
                           minute: "2-digit",

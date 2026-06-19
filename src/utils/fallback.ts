@@ -60,7 +60,18 @@ export async function callNanoGPTFallback(params: any): Promise<{text: string}> 
       }
   }
 
-  const NANO_API_KEY = atob("c2stbmFuby01ZWFlMDhlNy0yYjhmLTQ2OWUtYjRlZS1lNzVhMDBkNGYzNGY=");
+  // Ключ NanoGPT пользователь указывает сам в Настройках приложения
+  // (settings.nanoApiKey). Раньше ключ был захардкожен в коде через atob(...)
+  // и попадал в клиентский бандл — это утечка секрета. Опционально ключ можно
+  // задать через VITE_NANOGPT_API_KEY (тогда он не требуется в Настройках).
+  const NANO_API_KEY = (params.nanoApiKey as string | undefined) ||
+    (import.meta.env.VITE_NANOGPT_API_KEY as string | undefined);
+
+  if (!NANO_API_KEY) {
+    throw new Error(
+      "Не указан ключ NanoGPT. Добавьте его в Настройках приложения (раздел «Ключ NanoGPT») при использовании режимов «Простой»/«Продвинутый», либо используйте бесплатный режим со своим ключом Gemini.",
+    );
+  }
 
   const response = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
       method: "POST",
