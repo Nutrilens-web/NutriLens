@@ -64,18 +64,45 @@ export function useStore() {
     const currentMeals = saved ? JSON.parse(saved) : [];
     
     let updated = [meal, ...currentMeals];
-    try {
-      localStorage.setItem(MEALS_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save meal with images, trying without images', e);
+
+    const trySave = (data: any[]) => {
+      try {
+        localStorage.setItem(MEALS_KEY, JSON.stringify(data));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (!trySave(updated)) {
+      console.warn('Недостаточно памяти на устройстве. Прием пищи сохранен без фото.');
       const mealWithoutImages = { ...meal, images: [], image: undefined };
       updated = [mealWithoutImages, ...currentMeals];
-      try {
-        localStorage.setItem(MEALS_KEY, JSON.stringify(updated));
-        console.warn('Недостаточно памяти на устройстве. Прием пищи сохранен без фото.');
-      } catch (e2) {
-        console.error('Failed to save meal entirely', e2);
-        return; // Do not update state if we can't save
+      
+      if (!trySave(updated)) {
+        // Strip images from oldest to newest until it fits
+        console.warn('Память все еще переполнена, удаляем старые фото.');
+        
+        // Ensure we iterate from oldest (end of array) to newest
+        for (let i = updated.length - 1; i >= 1; i--) {
+          if (updated[i].images?.length || updated[i].image) {
+            updated[i] = { ...updated[i], images: [], image: undefined };
+            if (trySave(updated)) {
+              break;
+            }
+          }
+        }
+
+        // If it still fails, aggressively prune oldest meals
+        if (!trySave(updated)) {
+          while (updated.length > 30 && !trySave(updated)) {
+            updated.pop();
+          }
+          if (!trySave(updated)) {
+             console.error('Failed to save meal entirely');
+             return;
+          }
+        }
       }
     }
     setMealsState(updated);
@@ -86,11 +113,36 @@ export function useStore() {
     const currentMeals = saved ? JSON.parse(saved) : [];
     
     let updated = currentMeals.map((m: Meal) => (m.id === id ? { ...m, ...updates } : m));
-    try {
-      localStorage.setItem(MEALS_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to update meal', e);
-      return;
+    
+    const trySave = (data: any[]) => {
+      try {
+        localStorage.setItem(MEALS_KEY, JSON.stringify(data));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (!trySave(updated)) {
+      console.warn('Память переполнена, удаляем старые фото для сохранения.');
+      for (let i = updated.length - 1; i >= 0; i--) {
+        if (updated[i].images?.length || updated[i].image) {
+          updated[i] = { ...updated[i], images: [], image: undefined };
+          if (trySave(updated)) {
+            break;
+          }
+        }
+      }
+      
+      if (!trySave(updated)) {
+         while (updated.length > 30 && !trySave(updated)) {
+           updated.pop();
+         }
+         if (!trySave(updated)) {
+            console.error('Failed to update meal due to storage limits');
+            return;
+         }
+      }
     }
     setMealsState(updated);
   }, []);
