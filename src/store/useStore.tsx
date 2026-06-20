@@ -11,9 +11,14 @@ const CHAT_HISTORY_KEY = 'nutrilens_chat_history';
 
 const defaultSettings: Settings = {
   apiKey: '',
+  nanoApiKey: '',
   dailyGoal: 2000,
   userContext: 'Я мужчина, 85 кг, жарю на 5г масла',
   apiMode: 'free',
+  // Пустые строки = прямое подключение к API без прокси.
+  // Логика в ai-wrapper.ts / fallback.ts трактует пустое значение как falsy.
+  nanoApiEndpoint: '',
+  geminiApiEndpoint: '',
 };
 
 // Безопасно читаем и парсим значение из localStorage.

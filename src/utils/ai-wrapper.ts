@@ -28,9 +28,25 @@ export function getAI(options: {
   nanoApiKey?: string;
   useNanoGPTOnly?: boolean;
   nanoModel?: string;
+  nanoApiEndpoint?: string;   // кастомный URL прокси для NanoGPT (обход блокировок)
+  geminiApiEndpoint?: string;  // кастомный baseUrl для @google/genai SDK (httpOptions.baseUrl)
 }) {
-    const ai = new GoogleGenAI({ apiKey: options.apiKey || "dummy" });
-    const nanoParams = { ...({} as any), nanoModel: options.nanoModel, nanoApiKey: options.nanoApiKey };
+    // SDK @google/genai (см. node_modules/@google/genai/dist/genai.d.ts,
+    // интерфейс HttpOptions) поддерживает httpOptions.baseUrl — это позволяет
+    // перенаправить все запросы к Gemini на собственный прокси-эндпоинт,
+    // что нужно для обхода блокировки generativelanguage.googleapis.com в РФ.
+    const ai = new GoogleGenAI({
+      apiKey: options.apiKey || "dummy",
+      ...(options.geminiApiEndpoint ? {
+        httpOptions: { baseUrl: options.geminiApiEndpoint },
+      } : {}),
+    });
+    const nanoParams = {
+        ...({} as any),
+        nanoModel: options.nanoModel,
+        nanoApiKey: options.nanoApiKey,
+        nanoApiEndpoint: options.nanoApiEndpoint,
+    };
 
     return {
         models: {
@@ -75,5 +91,7 @@ export function getAIForSettings(settings: Settings) {
     nanoApiKey: settings.nanoApiKey,
     useNanoGPTOnly,
     nanoModel,
+    nanoApiEndpoint: settings.nanoApiEndpoint,
+    geminiApiEndpoint: settings.geminiApiEndpoint,
   });
 }

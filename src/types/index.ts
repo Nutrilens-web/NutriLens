@@ -7,6 +7,10 @@ export interface Settings {
   fatGoal?: number;
   carbsGoal?: number;
   apiMode?: 'free' | 'simple' | 'advanced';
+  // Кастомный URL прокси/эндпоинта для обхода региональных блокировок.
+  // Если пусто — используются дефолтные адреса (nano-gpt.com / Google).
+  nanoApiEndpoint?: string;
+  geminiApiEndpoint?: string;
 }
 
 export interface Meal {

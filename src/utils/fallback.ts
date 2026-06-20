@@ -75,7 +75,15 @@ export async function callNanoGPTFallback(params: any): Promise<{text: string}> 
     );
   }
 
-  const response = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
+  // Базовый URL может быть переопределён через params.nanoApiEndpoint
+  // (настройка в Настройках приложения) для обхода региональных блокировок
+  // через прокси-сервер (например, Cloudflare Worker). По умолчанию — прямой
+  // доступ к nano-gpt.com.
+  const base = (params.nanoApiEndpoint as string | undefined || "https://nano-gpt.com")
+      .replace(/\/$/, "");
+  const url = `${base}/api/v1/chat/completions`;
+
+  const response = await fetch(url, {
       method: "POST",
       headers: {
           "Content-Type": "application/json",

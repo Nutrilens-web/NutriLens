@@ -185,6 +185,44 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
+      <div className="bg-white rounded-[20px] p-5 shadow-sm space-y-5">
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-1">Прокси / обход блокировок</h3>
+          <p className="text-[10px] text-gray-400 mb-4">
+            Если прямой доступ к API заблокирован (например, в РФ), укажите адрес своего прокси.
+            Оставьте поля пустыми для прямого подключения. Шаблон прокси — в папке <code className="text-gray-500">proxy/</code>.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">
+            URL прокси для Gemini
+          </label>
+          <input
+            type="url"
+            value={localSettings.geminiApiEndpoint || ''}
+            onChange={(e) => setLocalSettings({ ...localSettings, geminiApiEndpoint: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+            placeholder="https://my-worker.workers.dev"
+          />
+          <p className="text-[10px] text-gray-400 mt-1.5">Базовый адрес для запросов @google/genai SDK. Пусто = generativelanguage.googleapis.com.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">
+            URL прокси для NanoGPT
+          </label>
+          <input
+            type="url"
+            value={localSettings.nanoApiEndpoint || ''}
+            onChange={(e) => setLocalSettings({ ...localSettings, nanoApiEndpoint: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+            placeholder="https://nano-gpt.com"
+          />
+          <p className="text-[10px] text-gray-400 mt-1.5">Базовый адрес для запросов к NanoGPT. Пусто = nano-gpt.com.</p>
+        </div>
+      </div>
+
       <button
         onClick={handleSave}
         className="w-full bg-emerald-500 text-white text-sm font-medium py-3 rounded-[12px] hover:bg-emerald-600 active:scale-[0.98] transition-all shadow-sm"
