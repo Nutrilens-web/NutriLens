@@ -1,6 +1,7 @@
-import { getAI, getAIForSettings, getApiKeyError } from './ai-wrapper';
+import { getAIForSettings, getApiKeyError } from './ai-wrapper';
 import { Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { Settings } from '../types';
+import { MODELS, getModelForMode, ADVANCED_ESCALATION_THRESHOLD } from './models';
 
 export async function analyzeMealImage(
   settings: Settings,
@@ -28,11 +29,12 @@ export async function analyzeMealImage(
 1. Внимательно изучи текст (ЗАПРОС ПОЛЬЗОВАТЕЛЯ) и АБСОЛЮТНО ВСЕ прикрепленные фотографии. Если пользователь прислал несколько фото, ты ОБЯЗАН проанализировать еду на КАЖДОМ из них.
 2. Если в тексте упоминается только одно блюдо, а на фото их несколько, ты ВСЕ РАВНО должен учесть всю еду со всех фото (текст просто дополняет информацию про одно блюдо, а не отменяет другие фото).
 3. Суммируй КБЖУ для ВСЕЙ НОВОЙ найденной еды (и из текста, и со ВСЕХ фото). КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ добавлять в сумму "Недавние приемы пищи" — они предоставлены только как история, чтобы ты понимал контекст (например, если пользователь пишет "съел еще порцию того же").
-4. Перед тем как выдавать итоговые калории и БЖУ, ты должна обязательно заполнить поле 'reasoning'. В нем пошагово опиши: какие ингредиенты ты видишь, оцени их примерный вес и учти скрытые калории (масло, соусы). Также оцени свою уверенность в распознавании блюда по шкале от 1 до 10 в поле 'confidence_score'. 
-5. Обязательно скопируй содержимое 'reasoning' в поле 'aiThoughts', так как оно требуется фронтенду, добавив в конец перечисление ВСЕЙ найденной еды, расчеты КБЖУ и веса отдельно для каждого блюда.
-6. В поле "name" запиши перечисление всей выявленной еды (например: "Омлет с сыром, кофе, сэндвич с курицей"). Ни в коем случае не оставляй пустым.
-7. Поля calories, protein, fat, carbs должны содержать ИТОГОВЫЕ СУММАРНЫЕ числа ТОЛЬКО для НОВОГО приема пищи из фото/запроса, округленные до целых.
-8. В любой непонятной ситуации делай лучшую примерную оценку (educated guess) - лучше приблизительные данные, чем нули.`;
+4. Перед тем как выдавать итоговые калории и БЖУ, ты должен обязательно заполнить поле 'reasoning'. В нем пошагово опиши: какие ингредиенты ты видишь, оцени их примерный вес и учти скрытые калории (масло, соусы).
+5. Поле 'confidence_score' (от 1 до 10) — это твоя УВЕРЕННОСТЬ В ТОЧНОСТИ РАСЧЁТА КБЖУ, а не просто факт распознавания блюда. Считай низко (3-5), если: порция оценена грубо, блюдо смешанное/неоднородное, скрытые жиры неясны, фото размыто или ракурс не позволяет оценить объём. Считай высоко (8-10) только при чёткой порции и однозначных ингредиентах. Честная низкая оценка важнее завышенной.
+6. В поле 'aiThoughts' дай КРАТКУЮ сводку для пользователя: перечисли всю найденную еду и финальные цифры КБЖУ + веса по каждому блюду. Не дублируй туда весь 'reasoning'.
+7. В поле "name" запиши перечисление всей выявленной еды (например: "Омлет с сыром, кофе, сэндвич с курицей"). Ни в коем случае не оставляй пустым.
+8. Поля calories, protein, fat, carbs должны содержать ИТОГОВЫЕ СУММАРНЫЕ числа ТОЛЬКО для НОВОГО приема пищи из фото/запроса, округленные до целых.
+9. В любой непонятной ситуации делай лучшую примерную оценку (educated guess) - лучше приблизительные данные, чем нули.`;
 
   const imageParts = base64Images.map((img) => ({
     inlineData: {
@@ -48,7 +50,9 @@ export async function analyzeMealImage(
 
     try {
       const response = await ai.models.generateContent({
-        model: mode === 'free' ? "gemini-2.5-flash" : modelName,
+        // free-режим использует официальный Google SDK → берём «голое» имя из MODELS.free.
+        // simple/advanced идут через NanoGPT и尊重ят переданному modelName.
+        model: mode === "free" ? MODELS.free : modelName,
         contents: [
           {
             role: "user",
@@ -106,17 +110,22 @@ export async function analyzeMealImage(
   let parsedJson: any;
 
   if (mode === 'advanced') {
-    parsedJson = await callModel("google/gemini-3.1-flash-lite");
-    if (!parsedJson.confidence_score || parsedJson.confidence_score < 7) {
+    // Каскадная маршрутизация по сложности:
+    // 1) Дешёвая лёгкая модель (flash-lite) делает первый проход и сама оценивает
+    //    уверенность в точности КБЖУ (confidence_score).
+    // 2) Если уверенность ниже порога — задача уходит на мощную thinking-модель.
+    //    Это экономит дорогие вызовы на простых блюдах и держит точность на сложных.
+    parsedJson = await callModel(MODELS.advancedLite);
+    const conf = Number(parsedJson.confidence_score);
+    if (!conf || conf < ADVANCED_ESCALATION_THRESHOLD) {
       if (onProgress) {
         onProgress("Блюдо сложное, подключаю глубокий анализ...");
       }
-      parsedJson = await callModel("google/gemini-3-flash-preview-thinking");
+      parsedJson = await callModel(MODELS.advanced);
     }
-  } else if (mode === 'simple') {
-    parsedJson = await callModel("google/gemini-3.1-flash-lite");
   } else {
-    parsedJson = await callModel("gemini-2.5-flash");
+    // free и simple — один вызов соответствующей модели.
+    parsedJson = await callModel(getModelForMode(mode));
   }
 
   return {
@@ -145,9 +154,7 @@ export async function getRecommendations(
 
   const ai = getAIForSettings(settings);
   const mode = settings.apiMode || 'free';
-  const modelName = mode === 'advanced'
-    ? "google/gemini-3-flash-preview-thinking"
-    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
+  const modelName = getModelForMode(mode);
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -246,9 +253,7 @@ export async function getDetailedRecipe(settings: Settings, recipePrompt: string
   if (keyError) throw new Error(keyError);
   const ai = getAIForSettings(settings);
   const mode = settings.apiMode || 'free';
-  const modelName = mode === 'advanced'
-    ? "google/gemini-3-flash-preview-thinking"
-    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
+  const modelName = getModelForMode(mode);
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
@@ -290,9 +295,7 @@ ${recipePrompt}
 export async function generateGroceryList(settings: Settings, userContext: string, dailyGoal: number, preferences: string) {
   const ai = getAIForSettings(settings);
   const mode = settings.apiMode || 'free';
-  const modelName = mode === 'advanced'
-    ? "google/gemini-3-flash-preview-thinking"
-    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
+  const modelName = getModelForMode(mode);
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}

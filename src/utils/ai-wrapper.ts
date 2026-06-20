@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { callNanoGPTFallback } from "./fallback";
+import { MODELS } from "./models";
 import type { Settings } from "../types";
 
 // Проверяет, что для выбранного режима указан нужный ключ.
@@ -64,10 +65,10 @@ export function getAI(options: {
 // ключ NanoGPT — из settings.nanoApiKey (пользователь указывает в Настройках).
 export function getAIForSettings(settings: Settings) {
   const useNanoGPTOnly = !!settings.apiMode && settings.apiMode !== "free";
-  const nanoModel =
-    settings.apiMode === "advanced"
-      ? "google/gemini-3-flash-preview-thinking"
-      : "google/gemini-3.1-flash-lite";
+  // nanoModel — модель по умолчанию для всего simple/advanced-трафика.
+  // В advanced-режиме конкретный вызов (lite vs мощная) задаётся через params.model
+  // и callNanoGPTFallback учитывает именно его, а не этот дефолт.
+  const nanoModel = MODELS.advanced;
 
   return getAI({
     apiKey: settings.apiKey,

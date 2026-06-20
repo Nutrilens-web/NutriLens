@@ -1,3 +1,5 @@
+import { MODELS } from "./models";
+
 export async function callNanoGPTFallback(params: any): Promise<{text: string}> {
   const messages = [];
 
@@ -80,7 +82,10 @@ export async function callNanoGPTFallback(params: any): Promise<{text: string}> 
           "Authorization": `Bearer ${NANO_API_KEY}`
       },
       body: JSON.stringify({
-          model: params.nanoModel || "google/gemini-3-flash-preview-thinking",
+          // params.model — конкретная модель вызова (важно для advanced-каскада:
+          // lite на первом проходе, мощная на эскалации). nanoModel — лишь фолбэк,
+          // если модель почему-то не передали.
+          model: params.model || params.nanoModel || MODELS.advanced,
           messages: messages
       })
   });

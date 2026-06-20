@@ -1,4 +1,5 @@
 import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
+import { getModelForMode } from '../utils/models';
 import React, { useState, useRef } from 'react';
 import { Camera, ImagePlus, Sparkles, Utensils, X, ArrowLeft } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -73,7 +74,7 @@ export function MenuAnalyzerScreen({ onBack }: { onBack?: () => void }) {
       }));
 
       const response = await ai.models.generateContent({
-        model: settings.apiMode === 'free' ? 'gemini-2.5-flash' : (settings.apiMode === 'advanced' ? 'google/gemini-3-flash-preview-thinking' : 'google/gemini-3.1-flash-lite'),
+        model: getModelForMode(settings.apiMode),
         contents: [
           { role: 'user', parts: [
             { text: prompt },

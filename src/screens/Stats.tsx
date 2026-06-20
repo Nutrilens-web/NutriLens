@@ -1,4 +1,5 @@
 import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
+import { getModelForMode } from '../utils/models';
 import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, YAxis } from 'recharts';
@@ -180,9 +181,7 @@ export function StatsScreen() {
     try {
       const ai = getAIForSettings(settings);
       const mode = settings.apiMode || 'free';
-      const modelName = mode === 'advanced'
-        ? 'google/gemini-3-flash-preview-thinking'
-        : (mode === 'simple' ? 'google/gemini-3.1-flash-lite' : 'gemini-2.5-flash');
+      const modelName = getModelForMode(mode);
       const prompt = `Проанализируй рацион за последние дни:\n${recentData}\n\nЦель пользователя: ${settings.dailyGoal} ккал/день.\n\nДай оценку от 1 до 10 (где 10 - идеально) и 2-3 коротких конструктивных совета по улучшению нутриентов/выбора блюд. Отвечай коротко и только по делу.`;
       
       const response = await ai.models.generateContent({
