@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { generateGroceryList } from '../utils/ai';
 import { getApiKeyError } from '../utils/ai-wrapper';
-import { Loader2, ShoppingCart, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Loader2, ShoppingCart, Trash2, CheckSquare, Square, ArrowLeft } from 'lucide-react';
 import Markdown from 'react-markdown';
 
-export function GroceryScreen() {
+export function GroceryScreen({ onBack }: { onBack?: () => void }) {
   const { settings, groceryData, saveGroceryData, groceryCheckedItems, toggleGroceryCheckedItem } = useStore();
   const [preferences, setPreferences] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +40,15 @@ export function GroceryScreen() {
 
   return (
     <div className="space-y-4 pb-6">
+      <div className="flex items-center gap-2 mb-1 px-1">
+        {onBack && (
+          <button onClick={onBack} className="p-1.5 -ml-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" aria-label="Назад">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
+        <ShoppingCart className="w-5 h-5 text-emerald-500" />
+        <h2 className="text-lg font-semibold text-gray-900">Список покупок</h2>
+      </div>
       <div className="bg-white rounded-[16px] p-4 shadow-sm space-y-4">
         <div>
           <label className="block text-[11px] font-medium text-gray-700 mb-1.5">Пожелания или примечания</label>

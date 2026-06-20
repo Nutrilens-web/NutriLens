@@ -16,8 +16,13 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
   };
 
   const handleClearData = () => {
+    localStorage.removeItem('nutrilens_settings');
     localStorage.removeItem('nutrilens_meals');
+    localStorage.removeItem('nutrilens_favorites');
     localStorage.removeItem('nutrilens_weights');
+    localStorage.removeItem('nutrilens_grocery');
+    localStorage.removeItem('nutrilens_grocery_checked');
+    localStorage.removeItem('nutrilens_chat_history');
     window.location.reload();
   };
 
@@ -26,7 +31,10 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
       settings: localStorage.getItem('nutrilens_settings'),
       meals: localStorage.getItem('nutrilens_meals'),
       favorites: localStorage.getItem('nutrilens_favorites'),
-      weights: localStorage.getItem('nutrilens_weights')
+      weights: localStorage.getItem('nutrilens_weights'),
+      grocery: localStorage.getItem('nutrilens_grocery'),
+      grocery_checked: localStorage.getItem('nutrilens_grocery_checked'),
+      chat_history: localStorage.getItem('nutrilens_chat_history')
     };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -49,6 +57,9 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         if (json.meals) localStorage.setItem('nutrilens_meals', json.meals);
         if (json.favorites) localStorage.setItem('nutrilens_favorites', json.favorites);
         if (json.weights) localStorage.setItem('nutrilens_weights', json.weights);
+        if (json.grocery) localStorage.setItem('nutrilens_grocery', json.grocery);
+        if (json.grocery_checked) localStorage.setItem('nutrilens_grocery_checked', json.grocery_checked);
+        if (json.chat_history) localStorage.setItem('nutrilens_chat_history', json.chat_history);
         alert('Данные успешно импортированы!');
         window.location.reload();
       } catch (err) {

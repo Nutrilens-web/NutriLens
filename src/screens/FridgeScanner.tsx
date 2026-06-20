@@ -1,13 +1,13 @@
 import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState, useRef } from 'react';
-import { Camera, ImagePlus, Sparkles, ChefHat, X } from 'lucide-react';
+import { Camera, ImagePlus, Sparkles, ChefHat, X, ArrowLeft } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 import { compressImage } from '../utils/image';
 import { getLocalDateString } from '../utils/date';
 
-export function FridgeScannerScreen() {
+export function FridgeScannerScreen({ onBack }: { onBack?: () => void }) {
   const { settings, meals } = useStore();
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +75,7 @@ export function FridgeScannerScreen() {
       }));
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: settings.apiMode === 'free' ? 'gemini-2.5-flash' : (settings.apiMode === 'advanced' ? 'google/gemini-3-flash-preview-thinking' : 'google/gemini-3.1-flash-lite'),
         contents: [
           { role: 'user', parts: [
             { text: prompt },
@@ -102,6 +102,11 @@ export function FridgeScannerScreen() {
   return (
     <div className="flex flex-col h-[calc(100dvh-180px)] bg-white rounded-[24px] shadow-[0_0_20px_rgba(0,0,0,0.02)] overflow-hidden p-4">
       <div className="flex items-center gap-2 mb-2">
+        {onBack && (
+          <button onClick={onBack} className="p-1.5 -ml-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" aria-label="Назад">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
         <div className="bg-blue-100 p-1.5 rounded-full">
            <ChefHat className="w-5 h-5 text-blue-600" />
         </div>

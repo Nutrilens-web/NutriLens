@@ -8,10 +8,11 @@ import {
   Search,
   BookOpen,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { getLocalDateString } from "../utils/date";
 
-export function RecommendationsScreen() {
+export function RecommendationsScreen({ onBack }: { onBack?: () => void }) {
   const { settings, meals } = useStore();
   const [userInput, setUserInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -107,6 +108,11 @@ export function RecommendationsScreen() {
     <div className="space-y-4 pb-6">
       <div className="flex items-center justify-between mb-3 px-1">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          {onBack && (
+            <button onClick={onBack} className="p-1.5 -ml-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" aria-label="Назад">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           <Lightbulb className="w-5 h-5 text-yellow-500" />
           Идеи для еды
         </h2>

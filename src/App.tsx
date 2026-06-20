@@ -5,19 +5,68 @@ import { AddMeal } from './screens/AddMeal';
 import { SettingsScreen } from './screens/Settings';
 import { StatsScreen } from './screens/Stats';
 import { AssistantScreen } from './screens/Assistant';
-import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles } from 'lucide-react';
+import { MoreScreen } from './screens/More';
+import { WaterTrackerScreen } from './screens/WaterTracker';
+import { FridgeScannerScreen } from './screens/FridgeScanner';
+import { GroceryScreen } from './screens/Grocery';
+import { HabitAnalyzerScreen } from './screens/HabitAnalyzer';
+import { MenuAnalyzerScreen } from './screens/MenuAnalyzer';
+import { RecommendationsScreen } from './screens/Recommendations';
+import { ChatScreen } from './screens/Chat';
+import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles, LayoutGrid } from 'lucide-react';
 import { cn } from './utils/cn';
 import { getLocalDateString } from './utils/date';
 
-export type Screen = 'dashboard' | 'add' | 'settings' | 'stats' | 'assistant';
+export type Screen =
+  | 'dashboard'
+  | 'add'
+  | 'settings'
+  | 'stats'
+  | 'assistant'
+  | 'more'
+  | 'water'
+  | 'fridge'
+  | 'grocery'
+  | 'habits'
+  | 'menu'
+  | 'recommendations'
+  | 'chat';
+
+// Экраны, на которых скрыта нижняя навигация (полноэкранные режимы).
+const FULLSCREEN_SCREENS: Screen[] = ['add'];
+
+// Вспомогательные экраны, открываемые из хаба «Ещё».
+const TOOL_SCREENS: Screen[] = ['water', 'fridge', 'grocery', 'habits', 'menu', 'recommendations', 'chat'];
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const { meals } = useStore();
-  
+
   const todayDateStr = getLocalDateString();
   const todayMealsCount = meals.filter(m => m.date === todayDateStr).length;
   const shouldPulseFAB = todayMealsCount === 0;
+
+  const goBack = () => setCurrentScreen('more');
+  const isToolScreen = TOOL_SCREENS.includes(currentScreen);
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'dashboard': return <Dashboard />;
+      case 'add': return <AddMeal onComplete={() => setCurrentScreen('dashboard')} />;
+      case 'settings': return <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />;
+      case 'stats': return <StatsScreen />;
+      case 'assistant': return <AssistantScreen />;
+      case 'more': return <MoreScreen onNavigate={setCurrentScreen} />;
+      case 'water': return <WaterTrackerScreen onBack={goBack} />;
+      case 'fridge': return <FridgeScannerScreen onBack={goBack} />;
+      case 'grocery': return <GroceryScreen onBack={goBack} />;
+      case 'habits': return <HabitAnalyzerScreen onBack={goBack} />;
+      case 'menu': return <MenuAnalyzerScreen onBack={goBack} />;
+      case 'recommendations': return <RecommendationsScreen onBack={goBack} />;
+      case 'chat': return <ChatScreen onBack={goBack} />;
+      default: return <Dashboard />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-24">
@@ -29,28 +78,34 @@ export default function App() {
             {new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
+        <button
+          onClick={() => setCurrentScreen('more')}
+          className={cn(
+            "p-2 rounded-full transition-colors",
+            currentScreen === 'more' || isToolScreen ? "text-emerald-500 bg-emerald-50" : "text-gray-500 hover:bg-gray-100",
+          )}
+          aria-label="Ещё инструменты"
+        >
+          <LayoutGrid className="w-5 h-5" />
+        </button>
       </header>
 
       {/* Main Content */}
       <main className="px-4 py-5 max-w-md mx-auto">
-        {currentScreen === 'dashboard' && <Dashboard />}
-        {currentScreen === 'add' && <AddMeal onComplete={() => setCurrentScreen('dashboard')} />}
-        {currentScreen === 'settings' && <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />}
-        {currentScreen === 'stats' && <StatsScreen />}
-        {currentScreen === 'assistant' && <AssistantScreen />}
+        {renderScreen()}
       </main>
 
       {/* Bottom Navigation */}
-      {currentScreen !== 'add' && (
+      {!FULLSCREEN_SCREENS.includes(currentScreen) && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-50 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl">
           <button onClick={() => setCurrentScreen('dashboard')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'dashboard' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <Home className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">Дневник</span>
           </button>
-          
+
           <button onClick={() => setCurrentScreen('stats')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'stats' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <BarChart3 className="w-5 h-5" />
-            <span className="text-[10px] font-medium mt-0.5">Отчет</span>
+            <span className="text-[10px] font-medium mt-0.5">Отчёт</span>
           </button>
 
           {/* Floating Action Button for Add positioned relative to the nav */}

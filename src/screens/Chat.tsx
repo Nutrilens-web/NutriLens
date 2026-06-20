@@ -1,13 +1,13 @@
 import { getAIForSettings, getApiKeyError } from '../utils/ai-wrapper';
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Send, Loader2, Bot, Image as ImageIcon, X, Camera } from 'lucide-react';
+import { Send, Loader2, Bot, Image as ImageIcon, X, Camera, ArrowLeft } from 'lucide-react';
 import { HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { compressImage } from '../utils/image';
 import { getLocalDateString } from '../utils/date';
 import Markdown from 'react-markdown';
 
-export function ChatScreen() {
+export function ChatScreen({ onBack }: { onBack?: () => void }) {
   const { settings, meals, chatHistory, saveChatHistory, clearChatHistory } = useStore();
   const [input, setInput] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -116,8 +116,14 @@ export function ChatScreen() {
         })
       ];
       
+      const model = settings.apiMode === 'free'
+        ? 'gemini-2.5-flash'
+        : (settings.apiMode === 'advanced'
+          ? 'google/gemini-3-flash-preview-thinking'
+          : 'google/gemini-3.1-flash-lite');
+
       const response = await ai.models.generateContent({
-         model: 'gemini-2.5-flash',
+         model,
          contents: fullHistory,
          config: {
            systemInstruction: systemContext,
@@ -157,6 +163,11 @@ export function ChatScreen() {
     <div className="flex flex-col h-[calc(100dvh-180px)] bg-white rounded-[24px] shadow-[0_0_20px_rgba(0,0,0,0.02)] overflow-hidden">
       <div className="flex items-center gap-3 p-3 shadow-sm shrink-0 bg-white z-10 relative justify-between">
         <div className="flex items-center gap-2">
+          {onBack && (
+            <button onClick={onBack} className="p-1.5 -ml-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" aria-label="Назад">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           <div className="bg-emerald-100 p-1.5 rounded-full">
              <Bot className="w-5 h-5 text-emerald-600" />
           </div>

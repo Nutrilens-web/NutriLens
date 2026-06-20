@@ -22,33 +22,109 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export function StatsScreen() {
   const { meals, settings, weights } = useStore();
-  const [period, setPeriod] = useState<'week' | 'month'>('week');
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [metric, setMetric] = useState<'calories' | 'weight'>('calories');
   const [healthScore, setHealthScore] = useState<string | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
 
   const chartData = useMemo(() => {
     const days = [];
-    const daysCount = period === 'week' ? 7 : 30;
-    
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = getLocalDateString(d);
-      
-      const dayMeals = meals.filter(m => m.date === dateStr);
-      const cals = dayMeals.reduce((sum, m) => sum + m.calories, 0);
-      const protein = dayMeals.reduce((sum, m) => sum + m.protein, 0);
-      const fat = dayMeals.reduce((sum, m) => sum + m.fat, 0);
-      const carbs = dayMeals.reduce((sum, m) => sum + m.carbs, 0);
-      
-      const weightLog = weights.find(w => w.date === dateStr);
-      const label = period === 'week'
-        ? d.toLocaleDateString('ru-RU', { weekday: 'short' })
-        : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-      
-        const status = cals <= settings.dailyGoal 
-          ? 'normal' 
+    const daysCount = period === 'week' ? 7 : (period === 'month' ? 30 : 365);
+
+    if (period === 'year') {
+      // Aggregate 365 days into ~12 monthly buckets so the chart stays readable.
+      // We still iterate day-by-day to accumulate, then emit one bucket per month.
+      const buckets: Record<string, {
+        dateStr: string;
+        label: string;
+        calories: number;
+        protein: number;
+        fat: number;
+        carbs: number;
+        weightSum: number;
+        weightCount: number;
+        lastWeight: number | null;
+        mealsList: string[];
+        dayCount: number;
+      }> = {};
+
+      for (let i = daysCount - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = getLocalDateString(d);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!buckets[monthKey]) {
+          buckets[monthKey] = {
+            dateStr,
+            label: d.toLocaleDateString('ru-RU', { month: 'short' }),
+            calories: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            weightSum: 0,
+            weightCount: 0,
+            lastWeight: null,
+            mealsList: [],
+            dayCount: 0,
+          };
+        }
+
+        const bucket = buckets[monthKey];
+        const dayMeals = meals.filter(m => m.date === dateStr);
+        bucket.calories += dayMeals.reduce((sum, m) => sum + m.calories, 0);
+        bucket.protein += dayMeals.reduce((sum, m) => sum + m.protein, 0);
+        bucket.fat += dayMeals.reduce((sum, m) => sum + m.fat, 0);
+        bucket.carbs += dayMeals.reduce((sum, m) => sum + m.carbs, 0);
+        bucket.dayCount += 1;
+        if (dayMeals.length) bucket.mealsList.push(...dayMeals.map(m => m.name));
+
+        const weightLog = weights.find(w => w.date === dateStr);
+        if (weightLog) {
+          bucket.weightSum += weightLog.weight;
+          bucket.weightCount += 1;
+          bucket.lastWeight = weightLog.weight;
+        }
+      }
+
+      const avgGoal = settings.dailyGoal;
+      Object.values(buckets).forEach(bucket => {
+        const avgCals = bucket.dayCount > 0 ? bucket.calories / bucket.dayCount : 0;
+        const status = avgCals <= avgGoal
+          ? 'normal'
+          : (avgCals <= avgGoal + 200 ? 'warning' : 'over');
+        days.push({
+          name: bucket.label,
+          calories: Math.round(avgCals),
+          protein: Math.round(bucket.dayCount > 0 ? bucket.protein / bucket.dayCount : 0),
+          fat: Math.round(bucket.dayCount > 0 ? bucket.fat / bucket.dayCount : 0),
+          carbs: Math.round(bucket.dayCount > 0 ? bucket.carbs / bucket.dayCount : 0),
+          weight: bucket.weightCount > 0 ? Math.round((bucket.weightSum / bucket.weightCount) * 10) / 10 : null,
+          date: bucket.dateStr,
+          isToday: false,
+          status,
+          mealsList: bucket.mealsList.slice(0, 30).join(', ')
+        });
+      });
+    } else {
+      for (let i = daysCount - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = getLocalDateString(d);
+
+        const dayMeals = meals.filter(m => m.date === dateStr);
+        const cals = dayMeals.reduce((sum, m) => sum + m.calories, 0);
+        const protein = dayMeals.reduce((sum, m) => sum + m.protein, 0);
+        const fat = dayMeals.reduce((sum, m) => sum + m.fat, 0);
+        const carbs = dayMeals.reduce((sum, m) => sum + m.carbs, 0);
+
+        const weightLog = weights.find(w => w.date === dateStr);
+        const label = period === 'week'
+          ? d.toLocaleDateString('ru-RU', { weekday: 'short' })
+          : d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+
+        const status = cals <= settings.dailyGoal
+          ? 'normal'
           : (cals <= settings.dailyGoal + 200 ? 'warning' : 'over');
 
         days.push({
@@ -63,8 +139,9 @@ export function StatsScreen() {
           status,
           mealsList: dayMeals.map(m => m.name).join(', ')
         });
+      }
     }
-    
+
     if (metric === 'weight') {
       let lastWeight = days.find(d => d.weight !== null)?.weight;
       for (let day of days) {
@@ -75,7 +152,7 @@ export function StatsScreen() {
         }
       }
     }
-    
+
     return days;
   }, [meals, weights, settings.dailyGoal, period, metric]);
 
@@ -93,16 +170,23 @@ export function StatsScreen() {
     setHealthLoading(true);
     setHealthScore(null);
 
-    const recentData = chartData.filter(d => d.calories > 0).slice(-7).map(d => 
+    const recentData = chartData
+      .filter(d => d.calories > 0)
+      .slice(period === 'year' ? -6 : -7)
+      .map(d =>
       `${d.date}: ${d.calories} ккал (Б:${d.protein} Ж:${d.fat} У:${d.carbs}). Ел: ${d.mealsList}`
     ).join('\n');
 
     try {
       const ai = getAIForSettings(settings);
+      const mode = settings.apiMode || 'free';
+      const modelName = mode === 'advanced'
+        ? 'google/gemini-3-flash-preview-thinking'
+        : (mode === 'simple' ? 'google/gemini-3.1-flash-lite' : 'gemini-2.5-flash');
       const prompt = `Проанализируй рацион за последние дни:\n${recentData}\n\nЦель пользователя: ${settings.dailyGoal} ккал/день.\n\nДай оценку от 1 до 10 (где 10 - идеально) и 2-3 коротких конструктивных совета по улучшению нутриентов/выбора блюд. Отвечай коротко и только по делу.`;
       
       const response = await ai.models.generateContent({
-         model: 'gemini-2.5-flash',
+         model: modelName,
          contents: [
            {
              role: "user",
@@ -154,11 +238,17 @@ export function StatsScreen() {
           >
             Неделя
           </button>
-          <button 
+          <button
             onClick={() => setPeriod('month')}
             className={cn("flex-1 py-1.5 text-xs font-medium rounded-full transition-all", period === 'month' ? "bg-white shadow-sm text-gray-900" : "text-gray-500")}
           >
             Месяц
+          </button>
+          <button
+            onClick={() => setPeriod('year')}
+            className={cn("flex-1 py-1.5 text-xs font-medium rounded-full transition-all", period === 'year' ? "bg-white shadow-sm text-gray-900" : "text-gray-500")}
+          >
+            Год
           </button>
         </div>
         
@@ -180,7 +270,7 @@ export function StatsScreen() {
       
       {metric === 'calories' ? (
         <div className="bg-white rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-          <h3 className="text-xs font-medium text-gray-500 mb-1">Среднее за {period === 'week' ? '7 дней' : '30 дней'}</h3>
+          <h3 className="text-xs font-medium text-gray-500 mb-1">Среднее за {period === 'week' ? '7 дней' : (period === 'month' ? '30 дней' : 'год')}</h3>
           <div className="flex items-end gap-1.5 mb-5">
             <span className="text-2xl font-light text-gray-900">{avgCalories || 0}</span>
             <span className="text-[11px] text-gray-400 mb-1">ккал / день</span>

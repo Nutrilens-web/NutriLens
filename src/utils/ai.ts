@@ -144,6 +144,10 @@ export async function getRecommendations(
   if (keyError) throw new Error(keyError);
 
   const ai = getAIForSettings(settings);
+  const mode = settings.apiMode || 'free';
+  const modelName = mode === 'advanced'
+    ? "google/gemini-3-flash-preview-thinking"
+    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
 
   const currentHour = new Date().getHours();
   let timeOfDay = 'День';
@@ -165,7 +169,7 @@ export async function getRecommendations(
 Предложи 3-4 идеи и верни СТРОГО в формате JSON.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: modelName,
     contents: [
       {
         role: "user",
@@ -241,13 +245,17 @@ export async function getDetailedRecipe(settings: Settings, recipePrompt: string
   const keyError = getApiKeyError(settings);
   if (keyError) throw new Error(keyError);
   const ai = getAIForSettings(settings);
+  const mode = settings.apiMode || 'free';
+  const modelName = mode === 'advanced'
+    ? "google/gemini-3-flash-preview-thinking"
+    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
 
   const prompt = `Напиши подробный пошаговый рецепт для следующего блюда:
 ${recipePrompt}
 Включи ингредиенты (с граммовками) и пошаговую инструкцию. Отвечай просто текстом (без сложного форматирования, используй обычные списки с тире). Не используй JSON.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: modelName,
     contents: [
       {
         role: "user",
@@ -281,6 +289,10 @@ ${recipePrompt}
 
 export async function generateGroceryList(settings: Settings, userContext: string, dailyGoal: number, preferences: string) {
   const ai = getAIForSettings(settings);
+  const mode = settings.apiMode || 'free';
+  const modelName = mode === 'advanced'
+    ? "google/gemini-3-flash-preview-thinking"
+    : (mode === 'simple' ? "google/gemini-3.1-flash-lite" : "gemini-2.5-flash");
   const prompt = `Составь план питания на неделю (на 1 человека) и соответствующий список покупок.
 Цель: ${dailyGoal} ккал/день.
 Контекст: ${userContext}
@@ -302,7 +314,7 @@ export async function generateGroceryList(settings: Settings, userContext: strin
 `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: modelName,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseMimeType: "application/json",
