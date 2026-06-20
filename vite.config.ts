@@ -57,6 +57,23 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "."),
       },
     },
+    build: {
+      rollupOptions: {
+        // Разбиваем бандл на чанки, чтобы:
+        // 1) react/react-dom жили в отдельном chunk — он редко меняется и
+        //    отлично кэшируется service worker'ом между обновлениями.
+        // 2) Тяжёлые библиотеки (recharts, react-markdown) — в своих chunk'ах,
+        //    они подгружаются только на соответствующих экранах через React.lazy.
+        // 3) genai SDK отделён от ядра приложения.
+        output: {
+          manualChunks: {
+            'vendor-ai': ['@google/genai'],
+            'vendor-charts': ['recharts'],
+            'vendor-markdown': ['react-markdown'],
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify — file watching is disabled to prevent flickering during agent edits.

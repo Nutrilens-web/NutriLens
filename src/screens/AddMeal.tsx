@@ -10,7 +10,7 @@ import {
   X,
   Plus,
 } from "lucide-react";
-import { compressImage, createThumbnail } from "../utils/image";
+import { compressImage, createThumbnail, prepareImage } from "../utils/image";
 import { analyzeMealImage } from "../utils/ai";
 import { v4 as uuidv4 } from "uuid";
 import { getLocalDateString } from "../utils/date";
@@ -78,6 +78,9 @@ function AnalyzingSkeleton({ isDeep }: { isDeep: boolean }) {
 export function AddMeal({ onComplete }: { onComplete: () => void }) {
   const { settings, addMeal, favorites, meals } = useStore();
   const [images, setImages] = useState<string[]>([]);
+  // Миниатюры, готовятся в том же проходе, что и полноразмерные фото (один
+  // decode файла), чтобы при сохранении не декодировать base64 повторно.
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -93,7 +96,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     fat: number;
     carbs: number;
     aiThoughts: string;
-    items?: { name: string; estimated_weight_g: number; calorie_density: number; calories: number; protein: number; fat: number; carbs: number; breakdown: string }[];
+    items?: { name: string; estimated_weight_g: number; portion_basis: string; calorie_density: number; calories: number; protein: number; fat: number; carbs: number; breakdown: string }[];
   } | null>(null);
   const [showThoughts, setShowThoughts] = useState(false);
   const [showItems, setShowItems] = useState(false);
@@ -106,13 +109,21 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     if (files.length === 0) return;
 
     try {
-      // Оставляем фото в высоком разрешении (1536x1536) чтобы ИИ мог прочитать мелкий текст
-      const compressedImages = await Promise.all(
-        files.map((f) => compressImage(f, 1536, 1536)),
+      // Оставляем фото в высоком разрешении (1536x1536) чтобы ИИ мог прочитать мелкий текст.
+      // Миниатюры готовим в том же проходе (один decode файла), а не отдельным
+      // вызовом createThumbnail при сохранении — экономим декодирование base64.
+      const prepared = await Promise.all(
+        files.map((f) => prepareImage(f, 1536, 1536)),
       );
+      const compressedImages = prepared.map((p) => p.full);
+      const newThumbs = prepared.map((p) => p.thumb);
 
       setImages((prev) => {
         const combined = [...prev, ...compressedImages];
+        return combined.length > 10 ? combined.slice(0, 10) : combined;
+      });
+      setThumbnails((prev) => {
+        const combined = [...prev, ...newThumbs];
         return combined.length > 10 ? combined.slice(0, 10) : combined;
       });
       // Side effects вынесены из функции-updater'а setState, чтобы не
@@ -131,6 +142,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    setThumbnails((prev) => prev.filter((_, i) => i !== index));
   };
 
   const [progressMsg, setProgressMsg] = useState("");
@@ -207,11 +219,13 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     setIsSaving(true);
 
     try {
-      // Create thumbnails to save space in localStorage, only if images exist
-      const thumbnails =
-        images.length > 0
-          ? await Promise.all(images.map((img) => createThumbnail(img)))
-          : [];
+      // Миниатюры уже готовы с момента выбора фото (prepareImage) — не
+      // декодируем base64 повторно. Если по какой-то причине их нет
+      // (старый путь), строим из полноразмерных фото.
+      let thumbs = thumbnails;
+      if (images.length > 0 && thumbs.length === 0) {
+        thumbs = await Promise.all(images.map((img) => createThumbnail(img)));
+      }
 
       const now = new Date();
       addMeal({
@@ -230,8 +244,8 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         reasoning: (result as any).reasoning || result.aiThoughts,
         confidence_score: (result as any).confidence_score,
         items: result.items,
-        images: thumbnails,
-        image: thumbnails[0] || undefined, // For backward compatibility
+        images: thumbs,
+        image: thumbs[0] || undefined, // For backward compatibility
       });
       onComplete();
     } catch (err) {
@@ -552,6 +566,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                       </div>
                       <div className="text-gray-500 space-y-0.5">
                         <div>~ {item.estimated_weight_g} г · плотность {item.calorie_density} ккал/100г</div>
+                        {item.portion_basis && <div className="text-gray-600">📏 {item.portion_basis}</div>}
                         <div>Б {item.protein}г · Ж {item.fat}г · У {item.carbs}г</div>
                         {item.breakdown && <div className="text-[10px] text-gray-400 mt-1 italic">{item.breakdown}</div>}
                       </div>

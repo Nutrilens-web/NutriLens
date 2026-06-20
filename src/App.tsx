@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useStore } from './store/useStore';
 import { Dashboard } from './screens/Dashboard';
 import { AddMeal } from './screens/AddMeal';
 import { SettingsScreen } from './screens/Settings';
-import { StatsScreen } from './screens/Stats';
 import { AssistantScreen } from './screens/Assistant';
 import { MoreScreen } from './screens/More';
 import { WaterTrackerScreen } from './screens/WaterTracker';
@@ -11,11 +10,25 @@ import { FridgeScannerScreen } from './screens/FridgeScanner';
 import { GroceryScreen } from './screens/Grocery';
 import { HabitAnalyzerScreen } from './screens/HabitAnalyzer';
 import { MenuAnalyzerScreen } from './screens/MenuAnalyzer';
-import { RecommendationsScreen } from './screens/Recommendations';
 import { ChatScreen } from './screens/Chat';
+import { RecommendationsScreen } from './screens/Recommendations';
 import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles, LayoutGrid } from 'lucide-react';
 import { cn } from './utils/cn';
 import { getLocalDateString } from './utils/date';
+
+// Тяжёлые экраны грузим лениво: Stats тянет recharts (~95 КБ gzip),
+// Chat — react-markdown. На старте (Dashboard) они не нужны, поэтому
+// выносим в отдельные chunk'и, которые подгружаются по требованию.
+const StatsScreen = lazy(() => import('./screens/Stats').then(m => ({ default: m.StatsScreen })));
+
+// Простая заглушка-спиннер на время подгрузки ленивого чанка.
+function ScreenLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export type Screen =
   | 'dashboard'
@@ -70,6 +83,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-24">
+      <Suspense fallback={<ScreenLoader />}>
+        {renderScreen()}
+      </Suspense>
       {/* Header */}
       <header className="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm/50">
         <div>

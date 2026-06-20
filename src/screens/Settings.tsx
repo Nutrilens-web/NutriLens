@@ -164,9 +164,9 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
             onChange={(e) => setLocalSettings({ ...localSettings, userContext: e.target.value })}
             rows={3}
             className="w-full px-3 py-2.5 rounded-[12px] bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all resize-none"
-            placeholder="Опишите себя, свою посуду, типичные порции..."
+            placeholder="Опишите себя и типичные порции (например: мужчина, 85 кг, жарю на 5г масла). Размер посуды указывать не нужно — ИИ оценит её по фото."
           />
-          <p className="text-[10px] text-gray-400 mt-1.5">Это поможет ИИ точнее оценивать порции.</p>
+          <p className="text-[10px] text-gray-400 mt-1.5">ИИ сам оценивает размер порции по предметам на фото — описывать посуду не обязательно.</p>
         </div>
 
         <div className="pt-2 border-t border-gray-100">

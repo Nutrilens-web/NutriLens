@@ -27,10 +27,12 @@ export interface Meal {
 }
 
 // Один элемент разобранного приёма пищи: название, расчётный вес,
-// типичная калорийность на 100 г, КБЖУ именно этой порции и строка расчёта.
+// чем оценён размер (portion_basis), типичная калорийность на 100 г,
+// КБЖУ именно этой порции и строка расчёта.
 export interface AnalyzedItem {
   name: string;
   estimated_weight_g: number;
+  portion_basis: string;
   calorie_density: number;
   calories: number;
   protein: number;

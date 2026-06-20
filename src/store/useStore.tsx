@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Meal, Settings, FavoriteMeal, WeightEntry, ChatMessage } from '../types';
 
 const SETTINGS_KEY = 'nutrilens_settings';
@@ -12,7 +12,7 @@ const CHAT_HISTORY_KEY = 'nutrilens_chat_history';
 const defaultSettings: Settings = {
   apiKey: '',
   dailyGoal: 2000,
-  userContext: 'Я мужчина, 85 кг, тарелки диаметром 26 см, жарю на 5г масла',
+  userContext: 'Я мужчина, 85 кг, жарю на 5г масла',
   apiMode: 'free',
 };
 
@@ -275,26 +275,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     saveJSON(CHAT_HISTORY_KEY, INITIAL_CHAT);
   }, []);
 
-  const value: StoreValue = {
-    settings,
-    setSettings,
-    meals,
-    favorites,
-    weights,
-    groceryData,
-    groceryCheckedItems,
-    chatHistory,
-    addMeal,
-    updateMeal,
-    deleteMeal,
-    addFavorite,
-    removeFavorite,
-    addWeight,
-    saveGroceryData,
-    toggleGroceryCheckedItem,
-    saveChatHistory,
-    clearChatHistory,
-  };
+  const value = useMemo<StoreValue>(
+    () => ({
+      settings,
+      setSettings,
+      meals,
+      favorites,
+      weights,
+      groceryData,
+      groceryCheckedItems,
+      chatHistory,
+      addMeal,
+      updateMeal,
+      deleteMeal,
+      addFavorite,
+      removeFavorite,
+      addWeight,
+      saveGroceryData,
+      toggleGroceryCheckedItem,
+      saveChatHistory,
+      clearChatHistory,
+    }),
+    [
+      settings,
+      meals,
+      favorites,
+      weights,
+      groceryData,
+      groceryCheckedItems,
+      chatHistory,
+    ],
+  );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
