@@ -7,7 +7,7 @@ import { HarmCategory, HarmBlockThreshold } from '@google/genai';
 import Markdown from 'react-markdown';
 
 export function WaterTrackerScreen({ onBack }: { onBack?: () => void }) {
-  const { settings } = useStore();
+  const { settings, weights } = useStore();
   const [amount, setAmount] = useState(0); // For demo purposes, we do local state
   const [isLoading, setIsLoading] = useState(false);
   const [advice, setAdvice] = useState<string | null>(null);
@@ -23,11 +23,20 @@ export function WaterTrackerScreen({ onBack }: { onBack?: () => void }) {
     setError(null);
     try {
       const ai = getAIForSettings(settings);
-      const prompt = `Пользователь: ${settings.userContext}.
-Проанализируй эти данные и:
-1. Вычисли рекомендуемую индивидуальную норму воды в день (в литрах и стаканах).
-2. Дай 3 коротких практических совета, как не забывать её пить.
-Отвечай структурировано.`;
+      // Текущий вес из журнала (если есть) даёт ИИ конкретную цифру для расчёта
+      // нормы воды по формуле ~30-35 мл/кг, вместо «общей» рекомендации всем.
+      const currentWeight = weights.length > 0 ? weights[0].weight : null;
+      const weightLine = currentWeight
+        ? ` Текущий вес пользователя: ${currentWeight} кг.`
+        : ' Вес пользователя неизвестен — тогда возьми типовую норму и обязательно объясни, что точная норма зависит от веса (30-35 мл на кг).';
+      const prompt = `Ты профессиональный диетолог. Дай рекомендации по водному балансу.
+Пользователь: ${settings.userContext}.${weightLine}
+
+Выполни:
+1. Рассчитай индивидуальную суточную норму воды по весу (~30-35 мл на кг массы тела, больше при тренировках/жаре) — приведи формулу и итог в литрах И в стаканах по 250 мл.
+2. Дай 3 коротких практических совета, как не забывать пить воду в течение дня.
+3. Упомяни, что часть воды поступает с едой (супы, фрукты), поэтому «чистой» воды можно чуть меньше.
+Отвечай структурированно, используй Markdown. Не давай медицинских диагнозов.`;
 
       const response = await ai.models.generateContent({
         model: getModelForMode(settings.apiMode),

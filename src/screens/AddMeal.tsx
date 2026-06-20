@@ -93,8 +93,10 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     fat: number;
     carbs: number;
     aiThoughts: string;
+    items?: { name: string; estimated_weight_g: number; calorie_density: number; calories: number; protein: number; fat: number; carbs: number; breakdown: string }[];
   } | null>(null);
   const [showThoughts, setShowThoughts] = useState(false);
+  const [showItems, setShowItems] = useState(false);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -227,6 +229,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         ai_thoughts: result.aiThoughts,
         reasoning: (result as any).reasoning || result.aiThoughts,
         confidence_score: (result as any).confidence_score,
+        items: result.items,
         images: thumbnails,
         image: thumbnails[0] || undefined, // For backward compatibility
       });
@@ -524,6 +527,42 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           </div>
 
           {/* AI Thoughts Accordion */}
+          {result.items && result.items.length > 0 && (
+            <div className="bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden">
+              <button
+                onClick={() => setShowItems(!showItems)}
+                className="w-full px-5 py-3.5 flex items-center justify-between text-left"
+              >
+                <span className="text-sm font-medium text-gray-700">
+                  Как разложил ИИ ({result.items.length} блюда)
+                </span>
+                {showItems ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+              {showItems && (
+                <div className="px-5 pb-5 pt-1.5 border-t border-gray-100 space-y-3">
+                  {result.items.map((item, idx) => (
+                    <div key={idx} className="bg-gray-50 rounded-[12px] p-3 text-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-semibold text-gray-800">{item.name}</span>
+                        <span className="text-emerald-600 font-medium">{item.calories} ккал</span>
+                      </div>
+                      <div className="text-gray-500 space-y-0.5">
+                        <div>~ {item.estimated_weight_g} г · плотность {item.calorie_density} ккал/100г</div>
+                        <div>Б {item.protein}г · Ж {item.fat}г · У {item.carbs}г</div>
+                        {item.breakdown && <div className="text-[10px] text-gray-400 mt-1 italic">{item.breakdown}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI Full Reasoning Accordion */}
           <div className="bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden">
             <button
               onClick={() => setShowThoughts(!showThoughts)}

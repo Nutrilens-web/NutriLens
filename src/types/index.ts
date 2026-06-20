@@ -23,6 +23,20 @@ export interface Meal {
   confidence_score?: number;
   images?: string[]; // Base64 array
   image?: string; // For backward compatibility
+  items?: AnalyzedItem[]; // Поэлементная разбивка: вес × плотность для каждого блюда
+}
+
+// Один элемент разобранного приёма пищи: название, расчётный вес,
+// типичная калорийность на 100 г, КБЖУ именно этой порции и строка расчёта.
+export interface AnalyzedItem {
+  name: string;
+  estimated_weight_g: number;
+  calorie_density: number;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  breakdown: string;
 }
 
 export interface FavoriteMeal {
