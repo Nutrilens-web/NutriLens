@@ -189,8 +189,9 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-1">Прокси / обход блокировок</h3>
           <p className="text-[10px] text-gray-400 mb-4">
-            Если прямой доступ к API заблокирован (например, в РФ), укажите адрес своего прокси.
-            Оставьте поля пустыми для прямого подключения. Шаблон прокси — в папке <code className="text-gray-500">proxy/</code>.
+            Если приложение не может связаться с нейросетями (часто бывает в РФ) — поднимите бесплатный прокси.
+            Подробная инструкция на 3 минуты — в файле <code className="text-gray-500">proxy/README.md</code> репозитория.
+            Если всё работает — поля оставьте пустыми.
           </p>
         </div>
 
