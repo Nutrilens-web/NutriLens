@@ -83,9 +83,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-24">
-      <Suspense fallback={<ScreenLoader />}>
-        {renderScreen()}
-      </Suspense>
       {/* Header */}
       <header className="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm/50">
         <div>
@@ -108,7 +105,9 @@ export default function App() {
 
       {/* Main Content */}
       <main className="px-4 py-5 max-w-md mx-auto">
-        {renderScreen()}
+        <Suspense fallback={<ScreenLoader />}>
+          {renderScreen()}
+        </Suspense>
       </main>
 
       {/* Bottom Navigation */}
