@@ -6,6 +6,8 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
   X,
   Plus,
@@ -13,7 +15,7 @@ import {
 import { compressImage, createThumbnail, prepareImage } from "../utils/image";
 import { analyzeMealImage } from "../utils/ai";
 import { v4 as uuidv4 } from "uuid";
-import { getLocalDateString } from "../utils/date";
+import { getLocalDateString, parseLocalDate } from "../utils/date";
 import { getApiKeyError } from "../utils/ai-wrapper";
 
 
@@ -100,6 +102,26 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
   } | null>(null);
   const [showThoughts, setShowThoughts] = useState(false);
   const [showItems, setShowItems] = useState(false);
+
+  // Выбранная дата приёма пищи. По умолчанию сегодня, но можно отмотать назад,
+  // чтобы дозаписать еду за прошлые дни (например, если забыл внести вчера).
+  // Вперёд от сегодня нельзя — будущее не записываем. Время всегда берётся
+  // как «сейчас» (момент записи), а дата — выбранная.
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
+  const todayStr = getLocalDateString();
+  const isToday = selectedDate === todayStr;
+
+  const handlePrevDay = () => {
+    const d = parseLocalDate(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(getLocalDateString(d));
+  };
+  const handleNextDay = () => {
+    if (isToday) return;
+    const d = parseLocalDate(selectedDate);
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(getLocalDateString(d));
+  };
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -230,7 +252,11 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
       const now = new Date();
       addMeal({
         id: uuidv4(),
-        date: getLocalDateString(now),
+        // Дата приёма пищи берётся из переключателя (по умолчанию сегодня,
+        // но можно отмотать на вчера и дальше, если забыл внести вовремя).
+        // Время — момент фактической записи: для прошлых дней это не слишком
+        // важно, но даёт осмысленное значение вместо захардкоженного полудня.
+        date: selectedDate,
         time: now.toLocaleTimeString("ru-RU", {
           hour: "2-digit",
           minute: "2-digit",
@@ -246,6 +272,8 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         items: result.items,
         images: thumbs,
         image: thumbs[0] || undefined, // For backward compatibility
+        // Снапшот цели на момент записи — см. комментарий в Meal.dailyGoalSnapshot.
+        dailyGoalSnapshot: settings.dailyGoal,
       });
       onComplete();
     } catch (err) {
@@ -264,6 +292,31 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <h2 className="text-xl font-semibold text-gray-900">Добавить еду</h2>
+      </div>
+
+      {/* Переключатель даты приёма пищи. Позволяет записать еду за прошлый день,
+          если забыл внести вовремя. Вперёд от сегодня нельзя — будущее не пишем. */}
+      <div className="flex items-center justify-between bg-white rounded-full p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+        <button onClick={handlePrevDay} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        </button>
+        <span className="font-medium text-sm text-gray-800 flex items-center gap-1.5">
+          {isToday ? (
+            "Сегодня"
+          ) : (
+            <>
+              {parseLocalDate(selectedDate).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+              <span className="text-[10px] text-orange-500 font-medium bg-orange-50 px-1.5 py-0.5 rounded-full">прошлое</span>
+            </>
+          )}
+        </span>
+        <button
+          onClick={handleNextDay}
+          disabled={isToday}
+          className={`p-1.5 rounded-full transition-colors ${isToday ? "opacity-30 cursor-default" : "hover:bg-gray-100"}`}
+        >
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        </button>
       </div>
 
       {!result ? (
@@ -417,7 +470,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                       const now = new Date();
                       addMeal({
                         id: uuidv4(),
-                        date: getLocalDateString(now),
+                        date: selectedDate,
                         time: now.toLocaleTimeString("ru-RU", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -428,6 +481,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                         fat: fav.fat,
                         carbs: fav.carbs,
                         ai_thoughts: "Добавлено из избранного",
+                        dailyGoalSnapshot: settings.dailyGoal,
                       });
                       onComplete();
                     }}

@@ -67,13 +67,15 @@ export async function analyzeMealImage(
 
   const parts = [{ text: prompt }, ...imageParts];
 
-  const callModel = async (modelName: string) => {
+  // signal — опциональный AbortSignal для прерывания зависшего запроса
+  // (используется при эскалации на thinking-модель, см. callModelWithTimeout).
+  const callModel = async (modelName: string, signal?: AbortSignal) => {
     const ai = getAIForSettings(settings);
 
     try {
       const response = await ai.models.generateContent({
         // free-режим использует официальный Google SDK → берём «голое» имя из MODELS.free.
-        // simple/advanced идут через NanoGPT и尊重ят переданному modelName.
+        // simple/advanced идут через NanoGPT и уважают переданный modelName.
         model: mode === "free" ? MODELS.free : modelName,
         contents: [
           {
@@ -81,7 +83,17 @@ export async function analyzeMealImage(
             parts,
           },
         ],
+        // abortSignal на верхнем уровне params понимает официальный Google SDK
+        // (см. GenerateContentParameters.abortSignal в @google/genai). Раньше signal
+        // сюда НЕ прокидывался — поэтому callModelWithTimeout создавал AbortSignal,
+        // но он никак не доходил до запроса, и thinking-модель зависала намертво.
+        ...(signal ? { abortSignal: signal } : {}),
         config: {
+          // Дублируем signal в config.abortSignal — его оттуда читает наш
+          // NanoGPT-фолбэк (callNanoGPTFallback в fallback.ts), не имеющий
+          // доступа к верхнеуровневому abortSignal. Так один сигнал прерывает
+          // и официальный SDK, и fetch в фолбэке.
+          ...(signal ? { abortSignal: signal } : {}),
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -153,6 +165,26 @@ export async function analyzeMealImage(
     }
   };
 
+  // Вызов модели с клиентским таймаутом. AbortSignal.timeout(ms) автоматически
+  // прервёт запрос и кинет AbortError по истечении ms — не нужно вручную
+  // следить за setInterval/clear. signal прокидывается в params.config.abortSignal,
+  // откуда его подхватывают и официальный Google SDK, и наш NanoGPT-фолбэк.
+  const callModelWithTimeout = async (modelName: string, timeoutMs: number) => {
+    const signal = AbortSignal.timeout(timeoutMs);
+    // Если внешний код уже отменил запрос раньше времени (мало вероятно здесь,
+    // но безопасно) — AbortSignal.timeout совмещается с любым числом слушателей.
+    try {
+      return await callModel(modelName, signal);
+    } catch (e: any) {
+      // Приводим разные формы прерывания к единому имени, чтобы каскад мог
+      // отличить «таймаут/отмена» от настоящей ошибки сети.
+      if (signal.aborted) {
+        e.name = "AbortError";
+      }
+      throw e;
+    }
+  };
+
   let parsedJson: any;
 
   if (mode === 'advanced') {
@@ -170,7 +202,26 @@ export async function analyzeMealImage(
       if (onProgress) {
         onProgress("Блюдо сложное, подключаю глубокий анализ...");
       }
-      parsedJson = await callModel(MODELS.advanced);
+      // Заранее сохраняем результат лёгкой модели как надёжный фолбэк на случай,
+      // если thinking-модель зависнет. Раньше эскалация шла без таймаута: мощная
+      // модель могла молча крутиться десятками секунд/минут, и пользователь
+      // видел вечный «Оценка... 50%» без результата. Теперь:
+      //  -AbortSignal.setTimeout(...) прерывает запрос на стороне клиента;
+      //  -при таймауте/сбое отдаём lite-результат (он уже посчитан и валиден),
+      //   а не падаем с ошибкой «пришёл пустой ответ».
+      try {
+        parsedJson = await callModelWithTimeout(MODELS.advanced, 60000);
+      } catch (escalationErr: any) {
+        const msg = String(escalationErr?.message || escalationErr).toLowerCase();
+        const isAbort = escalationErr?.name === "AbortError" || msg.includes("abort") || msg.includes("timeout");
+        if (isAbort) {
+          if (onProgress) onProgress("Глубокий анализ занял слишком долго — берём быстрый результат.");
+        } else {
+          // Сетевая/прочая ошибка эскалации — lite-результат всё равно лучше пустоты.
+          console.warn("Эскалация на thinking-модель провалилась, использую lite-результат.", escalationErr);
+        }
+        // parsedJson уже держит lite-результат — оставляем его.
+      }
     }
   } else {
     // free и simple — один вызов соответствующей модели.

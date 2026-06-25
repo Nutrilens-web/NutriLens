@@ -83,19 +83,24 @@ export async function callNanoGPTFallback(params: any): Promise<{text: string}> 
       .replace(/\/$/, "");
   const url = `${base}/api/v1/chat/completions`;
 
+  // abortSignal приходит из params.config (его кладёт туда callModel в ai.ts),
+  // чтобы можно было прервать повисший запрос thinking-модели по таймауту.
+  const signal: AbortSignal | undefined = params.config?.abortSignal;
+
   const response = await fetch(url, {
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${NANO_API_KEY}`
-      },
-      body: JSON.stringify({
-          // params.model — конкретная модель вызова (важно для advanced-каскада:
-          // lite на первом проходе, мощная на эскалации). nanoModel — лишь фолбэк,
-          // если модель почему-то не передали.
-          model: params.model || params.nanoModel || MODELS.advanced,
-          messages: messages
-      })
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${NANO_API_KEY}`
+    },
+    body: JSON.stringify({
+        // params.model — конкретная модель вызова (важно для advanced-каскада:
+        // lite на первом проходе, мощная на эскалации). nanoModel — лишь фолбэк,
+        // если модель почему-то не передали.
+        model: params.model || params.nanoModel || MODELS.advanced,
+        messages: messages
+    }),
+    ...(signal ? { signal } : {}),
   });
 
   if (!response.ok) {
