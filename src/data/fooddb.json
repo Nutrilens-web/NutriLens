@@ -2,7 +2,7 @@
   "_comment_format": "Встроенный справочник КБЖУ продуктов/блюд (на 100 г съедобной части). Сгенерирован скриптом scripts/build-fooddb.cjs из USDA FoodData Central (типы Foundation/Survey FNDDS/SR Legacy). Ключ — английский snake_case термин (такой же, какой модель должна вернуть в поле db_key). aliases — включая русские названия, для устойчивого matching'а при промахе модели. Итог = вес × плотность. Не найдено в базе → fallback на оценку модели. _usda содержит ссылку на первоисточник (fdcId/description/dataType).",
   "generated_at": "2026-06-30T20:22:07.459Z",
   "source": "USDA FoodData Central (https://fdc.nal.usda.gov)",
-  "products_count": 115,
+  "products_count": 112,
   "white_rice_cooked": {
     "aliases": [
       "рис варёный",
@@ -91,36 +91,34 @@
   "potato_boiled": {
     "aliases": [
       "картофель варёный",
-      "картошка варёная",
-      "вареная картошка",
-      "отварной картофель",
-      "boiled potato"
+      "варёная картошка",
+      "potato boiled",
+      "potatoes boiled"
     ],
-    "density_kcal_per_100g": 90,
-    "protein_per_100g": 2,
-    "fat_per_100g": 0.2,
-    "carbs_per_100g": 20.7,
+    "density_kcal_per_100g": 87,
+    "protein_per_100g": 1.87,
+    "fat_per_100g": 0.1,
+    "carbs_per_100g": 20.1,
     "_usda": {
-      "fdcId": 170134,
-      "description": "Sweet potato, cooked, baked in skin, flesh, with salt",
+      "fdcId": 170114,
+      "description": "Potatoes, boiled, cooked in skin, flesh, with salt",
       "dataType": "SR Legacy"
     }
   },
   "potato_mashed": {
     "aliases": [
-      "картофельное пюре",
-      "пюре картофельное",
       "пюре",
-      "mashed potato",
-      "mashed potatoes"
+      "картофельное пюре",
+      "mashed potatoes",
+      "potato mashed"
     ],
-    "density_kcal_per_100g": 143,
-    "protein_per_100g": 2.7,
-    "fat_per_100g": 8.2,
-    "carbs_per_100g": 11.2,
+    "density_kcal_per_100g": 83,
+    "protein_per_100g": 1.91,
+    "fat_per_100g": 0.57,
+    "carbs_per_100g": 17.6,
     "_usda": {
-      "fdcId": 169269,
-      "description": "Potato salad, home-prepared",
+      "fdcId": 170493,
+      "description": "Potatoes, mashed, home-prepared, whole milk added",
       "dataType": "SR Legacy"
     }
   },
@@ -179,35 +177,36 @@
   },
   "lentils_cooked": {
     "aliases": [
-      "чечевица",
       "чечевица варёная",
+      "чечевица",
       "lentils",
-      "lentil"
+      "lentils cooked"
     ],
-    "density_kcal_per_100g": 53,
-    "protein_per_100g": 2.9,
-    "fat_per_100g": 1.1,
-    "carbs_per_100g": 9.5,
+    "density_kcal_per_100g": 114,
+    "protein_per_100g": 9.02,
+    "fat_per_100g": 0.38,
+    "carbs_per_100g": 19.5,
     "_usda": {
-      "fdcId": 171577,
-      "description": "SMART SOUP, French Lentil",
+      "fdcId": 175254,
+      "description": "Lentils, mature seeds, cooked, boiled, with salt",
       "dataType": "SR Legacy"
     }
   },
   "chickpeas_cooked": {
     "aliases": [
-      "нут",
       "нут варёный",
+      "нут",
       "chickpeas",
-      "garbanzo"
+      "garbanzo",
+      "chickpea cooked"
     ],
-    "density_kcal_per_100g": 387,
-    "protein_per_100g": 22.4,
-    "fat_per_100g": 6.7,
-    "carbs_per_100g": 57.8,
+    "density_kcal_per_100g": 164,
+    "protein_per_100g": 8.86,
+    "fat_per_100g": 2.59,
+    "carbs_per_100g": 27.4,
     "_usda": {
-      "fdcId": 174288,
-      "description": "Chickpea flour (besan)",
+      "fdcId": 173799,
+      "description": "Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, with salt",
       "dataType": "SR Legacy"
     }
   },
@@ -602,17 +601,18 @@
   "milk_whole": {
     "aliases": [
       "молоко",
-      "цельное молоко",
+      "молоко цельное",
       "milk",
-      "whole milk"
+      "whole milk",
+      "молоко 3.2"
     ],
-    "density_kcal_per_100g": 62,
-    "protein_per_100g": 3.2,
-    "fat_per_100g": 3.3,
-    "carbs_per_100g": 4.9,
+    "density_kcal_per_100g": 64,
+    "protein_per_100g": 3.28,
+    "fat_per_100g": 3.66,
+    "carbs_per_100g": 4.65,
     "_usda": {
-      "fdcId": 172225,
-      "description": "Milk, buttermilk, fluid, whole",
+      "fdcId": 171266,
+      "description": "Milk, producer, fluid, 3.7% milkfat",
       "dataType": "SR Legacy"
     }
   },
@@ -926,37 +926,18 @@
   "pancakes": {
     "aliases": [
       "блины",
-      "блин",
       "блинчики",
       "pancakes",
       "pancake",
-      "crepes",
-      "crepe"
+      "блин"
     ],
-    "density_kcal_per_100g": 234,
-    "protein_per_100g": 0,
-    "fat_per_100g": 0,
-    "carbs_per_100g": 61.5,
+    "density_kcal_per_100g": 269,
+    "protein_per_100g": 5.71,
+    "fat_per_100g": 1.9,
+    "carbs_per_100g": 57.3,
     "_usda": {
-      "fdcId": 169578,
-      "description": "Syrups, table blends, pancake",
-      "dataType": "SR Legacy"
-    }
-  },
-  "syrniki": {
-    "aliases": [
-      "сырники",
-      "творожники",
-      "syrniki",
-      "cottage cheese pancakes"
-    ],
-    "density_kcal_per_100g": 234,
-    "protein_per_100g": 0,
-    "fat_per_100g": 0,
-    "carbs_per_100g": 61.5,
-    "_usda": {
-      "fdcId": 169578,
-      "description": "Syrups, table blends, pancake",
+      "fdcId": 174086,
+      "description": "Pancakes, plain, reduced fat",
       "dataType": "SR Legacy"
     }
   },
@@ -1033,37 +1014,20 @@
       "dataType": "Branded"
     }
   },
-  "dumplings_meat": {
-    "aliases": [
-      "пельмени",
-      "вареники",
-      "dumplings",
-      "pelmeni",
-      "vareniki"
-    ],
-    "density_kcal_per_100g": 195,
-    "protein_per_100g": 5.3,
-    "fat_per_100g": 6.1,
-    "carbs_per_100g": 29.6,
-    "_usda": {
-      "fdcId": 169779,
-      "description": "Dumpling, potato- or cheese-filled, frozen",
-      "dataType": "SR Legacy"
-    }
-  },
   "cucumber": {
     "aliases": [
       "огурец",
       "огурцы",
-      "cucumber"
+      "cucumber",
+      "cucumbers"
     ],
-    "density_kcal_per_100g": 11,
-    "protein_per_100g": 0.3,
-    "fat_per_100g": 0.2,
-    "carbs_per_100g": 2.3,
+    "density_kcal_per_100g": 10,
+    "protein_per_100g": 0.59,
+    "fat_per_100g": 0.16,
+    "carbs_per_100g": 2.16,
     "_usda": {
-      "fdcId": 169379,
-      "description": "Pickles, cucumber, sour",
+      "fdcId": 169225,
+      "description": "Cucumber, peeled, raw",
       "dataType": "SR Legacy"
     }
   },
@@ -1106,15 +1070,16 @@
     "aliases": [
       "морковь",
       "морковка",
-      "carrot"
+      "carrot",
+      "carrots"
     ],
-    "density_kcal_per_100g": 341,
-    "protein_per_100g": 8.1,
-    "fat_per_100g": 1.5,
-    "carbs_per_100g": 79.6,
+    "density_kcal_per_100g": 41,
+    "protein_per_100g": 0.93,
+    "fat_per_100g": 0.24,
+    "carbs_per_100g": 9.58,
     "_usda": {
-      "fdcId": 170500,
-      "description": "Carrot, dehydrated",
+      "fdcId": 170393,
+      "description": "Carrots, raw",
       "dataType": "SR Legacy"
     }
   },
@@ -1202,19 +1167,19 @@
   "bell_pepper": {
     "aliases": [
       "болгарский перец",
+      "перец болгарский",
       "сладкий перец",
-      "перец",
       "bell pepper",
-      "capsicum"
+      "peppers bell"
     ],
-    "density_kcal_per_100g": 27,
-    "protein_per_100g": 1.7,
-    "fat_per_100g": 0.5,
-    "carbs_per_100g": 5.4,
+    "density_kcal_per_100g": 31,
+    "protein_per_100g": 0.9,
+    "fat_per_100g": 0.13,
+    "carbs_per_100g": 6.65,
     "_usda": {
-      "fdcId": 169394,
-      "description": "Pepper, banana, raw",
-      "dataType": "SR Legacy"
+      "fdcId": 2258590,
+      "description": "Peppers, bell, red, raw",
+      "dataType": "Foundation"
     }
   },
   "mushrooms_champignon": {
@@ -1256,65 +1221,70 @@
   "avocado": {
     "aliases": [
       "авокадо",
-      "avocado"
+      "avocado",
+      "avocados"
     ],
-    "density_kcal_per_100g": 884,
-    "protein_per_100g": 0,
-    "fat_per_100g": 100,
-    "carbs_per_100g": 0,
+    "density_kcal_per_100g": 167,
+    "protein_per_100g": 1.96,
+    "fat_per_100g": 15.4,
+    "carbs_per_100g": 8.64,
     "_usda": {
-      "fdcId": 173573,
-      "description": "Oil, avocado",
+      "fdcId": 171706,
+      "description": "Avocados, raw, California",
       "dataType": "SR Legacy"
     }
   },
   "olives": {
     "aliases": [
       "оливки",
-      "маслины",
-      "olives"
+      "оливки",
+      "olives",
+      "olive",
+      "green olives"
     ],
-    "density_kcal_per_100g": 235,
-    "protein_per_100g": 11.8,
-    "fat_per_100g": 16.5,
-    "carbs_per_100g": 9.2,
+    "density_kcal_per_100g": 145,
+    "protein_per_100g": 1.03,
+    "fat_per_100g": 15.3,
+    "carbs_per_100g": 3.84,
     "_usda": {
-      "fdcId": 172926,
-      "description": "Olive loaf, pork",
+      "fdcId": 169096,
+      "description": "Olives, pickled, canned or bottled, green",
       "dataType": "SR Legacy"
     }
   },
   "beetroot_boiled": {
     "aliases": [
+      "свёкла варёная",
+      "свекла вареная",
       "свёкла",
-      "свекла варёная",
       "beetroot",
-      "beets"
+      "beets cooked"
     ],
-    "density_kcal_per_100g": 27,
-    "protein_per_100g": 2.6,
-    "fat_per_100g": 0.2,
-    "carbs_per_100g": 5.5,
+    "density_kcal_per_100g": 44,
+    "protein_per_100g": 1.68,
+    "fat_per_100g": 0.18,
+    "carbs_per_100g": 9.96,
     "_usda": {
-      "fdcId": 168508,
-      "description": "Beet greens, cooked, boiled, drained, with salt",
+      "fdcId": 169146,
+      "description": "Beets, cooked, boiled, drained",
       "dataType": "SR Legacy"
     }
   },
   "salad_green_mixed": {
     "aliases": [
-      "овощной салат",
-      "салат из овощей",
+      "зелёный салат",
+      "листовой салат",
+      "салат зелёный",
       "green salad",
-      "vegetable salad"
+      "lettuce salad"
     ],
-    "density_kcal_per_100g": 187,
-    "protein_per_100g": 16,
-    "fat_per_100g": 9.3,
-    "carbs_per_100g": 9.4,
+    "density_kcal_per_100g": 13,
+    "protein_per_100g": 1.33,
+    "fat_per_100g": 0.22,
+    "carbs_per_100g": 2.26,
     "_usda": {
-      "fdcId": 175160,
-      "description": "Fish, tuna salad",
+      "fdcId": 168431,
+      "description": "Lettuce, red leaf, raw",
       "dataType": "SR Legacy"
     }
   },
@@ -1338,16 +1308,16 @@
     "aliases": [
       "оливье",
       "салат оливье",
-      "мясной салат",
-      "olivier salad"
+      "olivier salad",
+      "potato salad"
     ],
-    "density_kcal_per_100g": 187,
-    "protein_per_100g": 16,
-    "fat_per_100g": 9.3,
-    "carbs_per_100g": 9.4,
+    "density_kcal_per_100g": 143,
+    "protein_per_100g": 2.68,
+    "fat_per_100g": 8.2,
+    "carbs_per_100g": 11.2,
     "_usda": {
-      "fdcId": 175160,
-      "description": "Fish, tuna salad",
+      "fdcId": 169269,
+      "description": "Potato salad, home-prepared",
       "dataType": "SR Legacy"
     }
   },
@@ -1409,13 +1379,13 @@
       "strawberry",
       "strawberries"
     ],
-    "density_kcal_per_100g": 69,
-    "protein_per_100g": 0.6,
-    "fat_per_100g": 0.6,
-    "carbs_per_100g": 17.4,
+    "density_kcal_per_100g": 32,
+    "protein_per_100g": 0.67,
+    "fat_per_100g": 0.3,
+    "carbs_per_100g": 7.68,
     "_usda": {
-      "fdcId": 173045,
-      "description": "Guavas, strawberry, raw",
+      "fdcId": 167762,
+      "description": "Strawberries, raw",
       "dataType": "SR Legacy"
     }
   },
@@ -1453,15 +1423,17 @@
   "lemon": {
     "aliases": [
       "лимон",
-      "lemon"
+      "лимон свежий",
+      "lemon",
+      "lemons"
     ],
-    "density_kcal_per_100g": 22,
-    "protein_per_100g": 0.4,
-    "fat_per_100g": 0.2,
-    "carbs_per_100g": 6.9,
+    "density_kcal_per_100g": 29,
+    "protein_per_100g": 1.1,
+    "fat_per_100g": 0.3,
+    "carbs_per_100g": 9.32,
     "_usda": {
-      "fdcId": 167747,
-      "description": "Lemon juice, raw",
+      "fdcId": 167746,
+      "description": "Lemons, raw, without peel",
       "dataType": "SR Legacy"
     }
   },
@@ -1484,19 +1456,18 @@
   "sunflower_oil": {
     "aliases": [
       "подсолнечное масло",
-      "растительное масло",
-      "масло растительное",
+      "масло подсолнечное",
       "sunflower oil",
-      "vegetable oil"
+      "oil sunflower"
     ],
-    "density_kcal_per_100g": 609,
-    "protein_per_100g": 18.9,
-    "fat_per_100g": 48.4,
-    "carbs_per_100g": 24.5,
+    "density_kcal_per_100g": 884,
+    "protein_per_100g": 0,
+    "fat_per_100g": 100,
+    "carbs_per_100g": 0,
     "_usda": {
-      "fdcId": 2515381,
-      "description": "Seeds, sunflower seed, kernel, raw",
-      "dataType": "Foundation"
+      "fdcId": 171025,
+      "description": "Oil, sunflower, linoleic, (approx. 65%)",
+      "dataType": "SR Legacy"
     }
   },
   "mayonnaise": {
@@ -1799,17 +1770,17 @@
     "aliases": [
       "сахар",
       "сахар белый",
-      "сахар-песок",
       "sugar",
-      "white sugar"
+      "white sugar",
+      "granulated sugar"
     ],
-    "density_kcal_per_100g": 347,
-    "protein_per_100g": 2.1,
+    "density_kcal_per_100g": 387,
+    "protein_per_100g": 0,
     "fat_per_100g": 0,
-    "carbs_per_100g": 84.8,
+    "carbs_per_100g": 100,
     "_usda": {
-      "fdcId": 170675,
-      "description": "Sweeteners, sugar substitute, granulated, brown",
+      "fdcId": 169655,
+      "description": "Sugars, granulated",
       "dataType": "SR Legacy"
     }
   },
@@ -1864,7 +1835,7 @@
     "fat_per_100g": 10.6,
     "carbs_per_100g": 1.12,
     "_usda": {
-      "fdcId": 171287,
+      "fdcId": 173424,
       "description": "Egg, whole, cooked, hard-boiled",
       "dataType": "SR Legacy"
     }
@@ -1882,7 +1853,7 @@
     "fat_per_100g": 0.09,
     "carbs_per_100g": 17.5,
     "_usda": {
-      "fdcId": 170685,
+      "fdcId": 170026,
       "description": "Potatoes, flesh and skin, raw",
       "dataType": "SR Legacy"
     }
@@ -1916,9 +1887,9 @@
     "fat_per_100g": 0.17,
     "carbs_per_100g": 13.8,
     "_usda": {
-      "fdcId": 1750340,
-      "description": "Apples, raw, with skin",
-      "dataType": "Foundation"
+      "fdcId": 171688,
+      "description": "Apples, raw, with skin (Includes foods for USDA Food Distribution Program)",
+      "dataType": "SR Legacy"
     }
   },
   "onion": {
@@ -1946,13 +1917,13 @@
       "beans cooked",
       "black beans"
     ],
-    "density_kcal_per_100g": 132,
-    "protein_per_100g": 8.9,
+    "density_kcal_per_100g": 127,
+    "protein_per_100g": 8.67,
     "fat_per_100g": 0.5,
-    "carbs_per_100g": 23.7,
+    "carbs_per_100g": 22.8,
     "_usda": {
-      "fdcId": 175193,
-      "description": "Beans, black, mature seeds, cooked, boiled, with salt",
+      "fdcId": 173792,
+      "description": "Beans, kidney, all types, mature seeds, cooked, boiled, with salt",
       "dataType": "SR Legacy"
     }
   },
@@ -1988,5 +1959,5 @@
       "dataType": "SR Legacy"
     }
   },
-  "_generated_at": "2026-07-06T16:20:28.453Z"
+  "_generated_at": "2026-07-06T16:52:23.113Z"
 }
