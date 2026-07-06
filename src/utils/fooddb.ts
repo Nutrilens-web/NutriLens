@@ -47,6 +47,11 @@ const DB: FoodDb = (() => {
   return clean;
 })();
 
+// Список всех валидных ключей базы — экспортируется для передачи в промпт ИИ,
+// чтобы модель возвращала db_key из реального множества, а не галлюцинировала.
+// Строится один раз при загрузке модуля.
+export const FOOD_DB_KEYS: readonly string[] = Object.keys(DB);
+
 // Обратный индекс алиасов → ключ. Строится один раз при загрузке модуля,
 // чтобы lookup по русским/альтернативным названиям был O(1), а не O(n*aliases).
 // В key кладём нормализованную форму алиаса (см. normalizeKey).
@@ -71,7 +76,11 @@ export function normalizeKey(s: string): string {
   return String(s || '')
     .toLowerCase()
     .trim()
-    .replace(/[^a-zа-яё0-9]+/g, '_')
+    // ё→е: в русском «варёная» и «вареная» — одна и та же форма, но дают
+    // разные нормализованные ключи (U+0451 vs U+0435). Унифицируем к «е»,
+    // чтобы опечатка/вариант написания не ломала lookup.
+    .replace(/ё/g, 'е')
+    .replace(/[^a-zа-я0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
 
@@ -122,23 +131,64 @@ export interface EnrichableItem {
  * худший случай = текущее поведение (нет регресса).
  */
 export function enrichItem<T extends EnrichableItem>(item: T): T {
+  // Валидация веса: 0, отрицательные или абсурдно большие (>2000 г) значения
+  // не enrich'им — оставляем оценку модели. Иначе enrichItem обнулил бы
+  // калории при weight=0 или выдал отрицательные при weight<0.
+  const rawWeight = Number(item.estimated_weight_g);
+  if (!rawWeight || rawWeight <= 0 || rawWeight > 2000) {
+    return { ...item, source: 'model' as MacroSource };
+  }
+
+  // Guard смешанных блюд: если name содержит признаки составного блюда
+  // (запятые, «с», «и», «в», соусы, суп, салат, плов...), enrich одиночным
+  // продуктом срежет скрытые калории (масло, соус) и заменит верный модельный
+  // итог на табличный «чистый продукт». Даже если модель вернула db_key —
+  // она ошиблась классификацией, enrich здесь навредит. Не enrich'им.
+  if (looksLikeMixedDish(item.name)) {
+    return { ...item, source: 'model' as MacroSource };
+  }
+
   const entry = lookupFood(item.db_key) ?? lookupFood(item.name);
   if (!entry) {
     return { ...item, source: 'model' as MacroSource };
   }
-  const weight = Number(item.estimated_weight_g) || 0;
+  const weight = rawWeight;
   const factor = weight / 100; // доля от 100 г
   const calories = Math.round(entry.density_kcal_per_100g * factor);
+  const protein = round1(entry.protein_per_100g * factor);
+  const fat = round1(entry.fat_per_100g * factor);
+  const carbs = round1(entry.carbs_per_100g * factor);
+  // Перегенерируем breakdown, чтобы он соответствовал табличным значениям.
+  // Иначе в UI остаётся старый breakdown модели («200г × 356 = 712») рядом
+  // с новой плотностью 92 и калориями 184 — тройное противоречие.
+  const breakdown = `${weight}г × ${entry.density_kcal_per_100g} ккал/100г = ${calories} ккал [USDA]`;
   return {
     ...item,
     db_key: canonicalKey(entry) ?? item.db_key,
     calorie_density: entry.density_kcal_per_100g,
     calories,
-    protein: round1(entry.protein_per_100g * factor),
-    fat: round1(entry.fat_per_100g * factor),
-    carbs: round1(entry.carbs_per_100g * factor),
+    protein,
+    fat,
+    carbs,
+    breakdown,
     source: 'db' as MacroSource,
   };
+}
+
+/**
+ * Эвристика: похож ли name на смешанное/составное блюдо (плов, салат, суп,
+ * отбивная в панировке, каша с маслом). Для таких блюд enrich одиночным
+ * продуктом срежет скрытые калории — лучше оставить оценку модели.
+ */
+function looksLikeMixedDish(name: string): boolean {
+  const n = String(name || '').toLowerCase();
+  // Запятая = перечисление ингредиентов.
+  if (n.includes(',')) return true;
+  // Союзы/предлоги соединения — «рис с овощами», «котлета и пюре», «каша на молоке».
+  if (/\s(с|и|в|на)\s/.test(n)) return true;
+  // Явные составные блюда.
+  if (/(суп|борщ|солянка|плов|жульен|рагу|голубцы|тефтели|ежики|гуляш|азу|ризотто|паэлья|суши|роллы|сэндвич|бургер|шаверма|шаурма|бутерброд|пицца|окрошка|винегрет|оливье|салат|рагу|запеканка|лазанья|паста|спагетти|карбонара)/.test(n)) return true;
+  return false;
 }
 
 /** Применяет enrichItem к массиву items. Не мутирует исходный массив. */

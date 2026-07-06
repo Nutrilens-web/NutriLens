@@ -2,7 +2,7 @@
   "_comment_format": "Встроенный справочник КБЖУ продуктов/блюд (на 100 г съедобной части). Сгенерирован скриптом scripts/build-fooddb.cjs из USDA FoodData Central (типы Foundation/Survey FNDDS/SR Legacy). Ключ — английский snake_case термин (такой же, какой модель должна вернуть в поле db_key). aliases — включая русские названия, для устойчивого matching'а при промахе модели. Итог = вес × плотность. Не найдено в базе → fallback на оценку модели. _usda содержит ссылку на первоисточник (fdcId/description/dataType).",
   "generated_at": "2026-06-30T20:22:07.459Z",
   "source": "USDA FoodData Central (https://fdc.nal.usda.gov)",
-  "products_count": 112,
+  "products_count": 110,
   "white_rice_cooked": {
     "aliases": [
       "рис варёный",
@@ -143,20 +143,20 @@
   },
   "millet_cooked": {
     "aliases": [
-      "пшено",
       "пшённая каша",
-      "пшенная каша",
-      "millet",
-      "millet porridge"
+      "пшено варёное",
+      "пшено",
+      "millet cooked",
+      "millet"
     ],
-    "density_kcal_per_100g": 376,
-    "protein_per_100g": 10,
-    "fat_per_100g": 4.2,
-    "carbs_per_100g": 74.4,
+    "density_kcal_per_100g": 119,
+    "protein_per_100g": 3.51,
+    "fat_per_100g": 1,
+    "carbs_per_100g": 23.7,
     "_usda": {
-      "fdcId": 2512379,
-      "description": "Millet, whole grain",
-      "dataType": "Foundation"
+      "fdcId": 168871,
+      "description": "Millet, cooked",
+      "dataType": "SR Legacy"
     }
   },
   "quinoa_cooked": {
@@ -268,16 +268,17 @@
   "minced_meat_pork_beef": {
     "aliases": [
       "фарш",
+      "фарш свино-говяжий",
       "фарш мясной",
-      "говяжий фарш",
-      "свино-говяжий фарш",
       "minced meat",
       "ground beef",
-      "ground meat"
+      "ground pork",
+      "говяжий фарш",
+      "свиной фарш"
     ],
     "density_kcal_per_100g": 243,
-    "protein_per_100g": 17.5,
-    "fat_per_100g": 19.4,
+    "protein_per_100g": 17.53,
+    "fat_per_100g": 19.44,
     "carbs_per_100g": 0,
     "_usda": {
       "fdcId": 2514744,
@@ -414,15 +415,17 @@
   "bacon": {
     "aliases": [
       "бекон",
-      "bacon"
+      "бекон жареный",
+      "bacon",
+      "bacon cooked"
     ],
-    "density_kcal_per_100g": 146,
-    "protein_per_100g": 28.3,
-    "fat_per_100g": 2.8,
-    "carbs_per_100g": 1.8,
+    "density_kcal_per_100g": 548,
+    "protein_per_100g": 35.7,
+    "fat_per_100g": 43.3,
+    "carbs_per_100g": 1.35,
     "_usda": {
-      "fdcId": 168383,
-      "description": "Canadian bacon, cooked, pan-fried",
+      "fdcId": 167914,
+      "description": "Pork, cured, bacon, cooked, baked",
       "dataType": "SR Legacy"
     }
   },
@@ -689,46 +692,50 @@
   },
   "sour_cream_lowfat": {
     "aliases": [
-      "сметана 15%",
       "сметана 10%",
-      "нежирная сметана",
-      "sour cream"
+      "сметана 15%",
+      "сметана лёгкая",
+      "lowfat sour cream",
+      "light sour cream"
     ],
-    "density_kcal_per_100g": 196,
-    "protein_per_100g": 3.1,
-    "fat_per_100g": 18,
-    "carbs_per_100g": 5.6,
+    "density_kcal_per_100g": 163,
+    "protein_per_100g": 2.7,
+    "fat_per_100g": 14,
+    "carbs_per_100g": 4.2,
     "_usda": {
-      "fdcId": 2346387,
-      "description": "Cream, sour, full fat",
-      "dataType": "Foundation"
+      "fdcId": 0,
+      "description": "Approximation for 10-15% sour cream (USDA has only full-fat)",
+      "dataType": "manual"
     }
   },
   "sour_cream_fatty": {
     "aliases": [
       "сметана",
+      "сметана жирная",
       "сметана 20%",
-      "жирная сметана"
+      "сметана 25%",
+      "sour cream",
+      "sour cream full fat"
     ],
-    "density_kcal_per_100g": 200,
-    "protein_per_100g": 3.3,
-    "fat_per_100g": 16.7,
-    "carbs_per_100g": 6.7,
+    "density_kcal_per_100g": 198,
+    "protein_per_100g": 2.44,
+    "fat_per_100g": 19.4,
+    "carbs_per_100g": 4.63,
     "_usda": {
-      "fdcId": 2075636,
-      "description": "SOUR CREAM",
-      "dataType": "Branded"
+      "fdcId": 171257,
+      "description": "Cream, sour, cultured",
+      "dataType": "SR Legacy"
     }
   },
   "cheese_hard": {
     "aliases": [
-      "сыр",
       "твёрдый сыр",
-      "российский сыр",
-      "голландский сыр",
-      "cheese",
+      "пармезан",
+      "сыр пармезан",
       "hard cheese",
-      "cheddar"
+      "parmesan cheese",
+      "cheddar",
+      "чеддер"
     ],
     "density_kcal_per_100g": 392,
     "protein_per_100g": 35.8,
@@ -770,21 +777,6 @@
     "_usda": {
       "fdcId": 2433848,
       "description": "CREAM CHEESE",
-      "dataType": "Branded"
-    }
-  },
-  "parmesan": {
-    "aliases": [
-      "пармезан",
-      "parmesan"
-    ],
-    "density_kcal_per_100g": 429,
-    "protein_per_100g": 35.7,
-    "fat_per_100g": 28.6,
-    "carbs_per_100g": 3.6,
-    "_usda": {
-      "fdcId": 2021452,
-      "description": "PARMESAN CHEESE",
       "dataType": "Branded"
     }
   },
@@ -895,15 +887,17 @@
   "croissant": {
     "aliases": [
       "круассан",
-      "croissant"
+      "круассаны",
+      "croissant",
+      "croissants"
     ],
-    "density_kcal_per_100g": 289,
-    "protein_per_100g": 12.9,
-    "fat_per_100g": 16.4,
-    "carbs_per_100g": 22.5,
+    "density_kcal_per_100g": 406,
+    "protein_per_100g": 8.2,
+    "fat_per_100g": 21,
+    "carbs_per_100g": 45.8,
     "_usda": {
-      "fdcId": 173269,
-      "description": "Fast foods, croissant, with egg, cheese, and bacon",
+      "fdcId": 174987,
+      "description": "Croissants, butter",
       "dataType": "SR Legacy"
     }
   },
@@ -1202,19 +1196,18 @@
   },
   "corn_canned": {
     "aliases": [
-      "кукуруза",
-      "консервированная кукуруза",
       "кукуруза консервированная",
-      "corn",
+      "консервированная кукуруза",
+      "corn canned",
       "canned corn"
     ],
-    "density_kcal_per_100g": 72,
-    "protein_per_100g": 1.7,
-    "fat_per_100g": 0.4,
-    "carbs_per_100g": 18.1,
+    "density_kcal_per_100g": 67,
+    "protein_per_100g": 2.29,
+    "fat_per_100g": 1.22,
+    "carbs_per_100g": 14.3,
     "_usda": {
-      "fdcId": 169215,
-      "description": "Corn, sweet, yellow, canned, cream style, regular pack",
+      "fdcId": 169214,
+      "description": "Corn, sweet, yellow, canned, whole kernel, drained solids",
       "dataType": "SR Legacy"
     }
   },
@@ -1236,7 +1229,6 @@
   },
   "olives": {
     "aliases": [
-      "оливки",
       "оливки",
       "olives",
       "olive",
@@ -1273,7 +1265,6 @@
   "salad_green_mixed": {
     "aliases": [
       "зелёный салат",
-      "листовой салат",
       "салат зелёный",
       "green salad",
       "lettuce salad"
@@ -1286,22 +1277,6 @@
       "fdcId": 168431,
       "description": "Lettuce, red leaf, raw",
       "dataType": "SR Legacy"
-    }
-  },
-  "salad_caesar": {
-    "aliases": [
-      "цезарь",
-      "салат цезарь",
-      "caesar salad"
-    ],
-    "density_kcal_per_100g": 429,
-    "protein_per_100g": 14.3,
-    "fat_per_100g": 14.3,
-    "carbs_per_100g": 71.4,
-    "_usda": {
-      "fdcId": 2396522,
-      "description": "CAESAR SALAD CROUTONS, CAESAR SALAD",
-      "dataType": "Branded"
     }
   },
   "salad_olivier": {
@@ -1441,16 +1416,17 @@
     "aliases": [
       "оливковое масло",
       "масло оливковое",
-      "olive oil"
+      "olive oil",
+      "oil olive"
     ],
-    "density_kcal_per_100g": 800,
+    "density_kcal_per_100g": 884,
     "protein_per_100g": 0,
-    "fat_per_100g": 93.3,
+    "fat_per_100g": 100,
     "carbs_per_100g": 0,
     "_usda": {
-      "fdcId": 1905976,
-      "description": "OLIVE OIL",
-      "dataType": "Branded"
+      "fdcId": 171413,
+      "description": "Oil, olive, salad or cooking",
+      "dataType": "SR Legacy"
     }
   },
   "sunflower_oil": {
@@ -1476,14 +1452,14 @@
       "mayonnaise",
       "mayo"
     ],
-    "density_kcal_per_100g": 750,
-    "protein_per_100g": 0,
-    "fat_per_100g": 75,
-    "carbs_per_100g": 0,
+    "density_kcal_per_100g": 680,
+    "protein_per_100g": 0.96,
+    "fat_per_100g": 74.8,
+    "carbs_per_100g": 0.57,
     "_usda": {
-      "fdcId": 1805129,
-      "description": "MAYONNAISE",
-      "dataType": "Branded"
+      "fdcId": 171009,
+      "description": "Salad dressing, mayonnaise, regular",
+      "dataType": "SR Legacy"
     }
   },
   "ketchup": {
@@ -1593,19 +1569,18 @@
       "кофе с молоком",
       "латте",
       "капучино",
-      "кофе с сахаром",
       "latte",
       "cappuccino",
       "coffee with milk"
     ],
-    "density_kcal_per_100g": 62,
-    "protein_per_100g": 2.1,
-    "fat_per_100g": 1.4,
-    "carbs_per_100g": 10.3,
+    "density_kcal_per_100g": 53,
+    "protein_per_100g": 2.14,
+    "fat_per_100g": 1.07,
+    "carbs_per_100g": 8.9,
     "_usda": {
-      "fdcId": 175224,
-      "description": "SILK Coffee, soymilk",
-      "dataType": "SR Legacy"
+      "fdcId": 2425632,
+      "description": "COFFEE LATTE COFFEE BEVERAGE, COFFEE",
+      "dataType": "Branded"
     }
   },
   "tea_black": {
@@ -1632,15 +1607,16 @@
       "чай с сахаром",
       "сладкий чай",
       "sweet tea",
-      "tea with sugar"
+      "tea with sugar",
+      "sweetened tea"
     ],
-    "density_kcal_per_100g": 0,
+    "density_kcal_per_100g": 45,
     "protein_per_100g": 0,
-    "fat_per_100g": 0,
-    "carbs_per_100g": 0,
+    "fat_per_100g": 0.22,
+    "carbs_per_100g": 10.8,
     "_usda": {
-      "fdcId": 171946,
-      "description": "Beverages, tea, hibiscus, brewed",
+      "fdcId": 171888,
+      "description": "Beverages, tea, black, ready-to-drink, lemon, sweetened",
       "dataType": "SR Legacy"
     }
   },
@@ -1667,19 +1643,19 @@
     "aliases": [
       "лимонад",
       "сладкая газировка",
-      "кола",
-      "лимонад сладкий",
+      "газировка",
       "lemonade",
-      "soda",
-      "cola"
+      "cola",
+      "кола",
+      "содовая"
     ],
-    "density_kcal_per_100g": 376,
+    "density_kcal_per_100g": 14,
     "protein_per_100g": 0,
-    "fat_per_100g": 1.1,
-    "carbs_per_100g": 97.6,
+    "fat_per_100g": 0.04,
+    "carbs_per_100g": 3.59,
     "_usda": {
-      "fdcId": 174858,
-      "description": "Beverages, Lemonade, powder",
+      "fdcId": 174859,
+      "description": "Lemonade, powder, prepared with water",
       "dataType": "SR Legacy"
     }
   },
@@ -1959,5 +1935,5 @@
       "dataType": "SR Legacy"
     }
   },
-  "_generated_at": "2026-07-06T16:52:23.113Z"
+  "_generated_at": "2026-07-06T19:58:36.141Z"
 }
