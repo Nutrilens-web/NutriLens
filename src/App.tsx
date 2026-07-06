@@ -82,9 +82,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-24">
-      {/* Header */}
-      <header className="bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm/50">
+    // Mobile-app shell: фиксированная по высоте колонка, где header и нижняя
+    // навигация не прокручиваются, а основной контент скроллится внутри <main>.
+    // Раньше использовался sticky-headers + скролл всего окна: motion-карточки
+    // (transform) и layoutId-анимации экрана «Отчёт» создавали stacking-контексты,
+    // которые при пролистывании налезали на верхнюю панель. Flex-шелл физически
+    // разделяет header и скролл-зону, поэтому налезание невозможно.
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-gray-50 text-gray-800 font-sans">
+      {/* Header — shrink-0, не участвует в скролле, всегда сверху */}
+      <header className="bg-white px-4 py-3 flex items-center justify-between shrink-0 z-30 shadow-sm/50 relative">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">NutriLens</h1>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -103,16 +109,17 @@ export default function App() {
         </button>
       </header>
 
-      {/* Main Content */}
-      <main className="px-4 py-5 max-w-md mx-auto">
+      {/* Main Content — собственный скролл-контейнер, изолирован от header */}
+      <main className="flex-1 overflow-y-auto px-4 py-5 max-w-md mx-auto w-full hide-scrollbar">
         <Suspense fallback={<ScreenLoader />}>
           {renderScreen()}
         </Suspense>
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation — shrink-0, в потоке flex-колонки (не fixed):
+          навигация всегда прижата к низу экрана и не перекрывает контент. */}
       {!FULLSCREEN_SCREENS.includes(currentScreen) && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-50 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl">
+        <div className="shrink-0 bg-white border-t border-gray-50 flex justify-evenly items-center z-20 pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-3xl">
           <button onClick={() => setCurrentScreen('dashboard')} className={cn("flex flex-col items-center gap-1 transition-colors w-16 mb-2", currentScreen === 'dashboard' ? "text-emerald-500" : "text-gray-400 hover:text-gray-600")}>
             <Home className="w-5 h-5" />
             <span className="text-[10px] font-medium mt-0.5">Дневник</span>

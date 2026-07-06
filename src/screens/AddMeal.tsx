@@ -98,7 +98,7 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
     fat: number;
     carbs: number;
     aiThoughts: string;
-    items?: { name: string; estimated_weight_g: number; portion_basis: string; calorie_density: number; calories: number; protein: number; fat: number; carbs: number; breakdown: string }[];
+    items?: { name: string; estimated_weight_g: number; portion_basis: string; calorie_density: number; calories: number; protein: number; fat: number; carbs: number; breakdown: string; db_key?: string; source?: 'db' | 'model' }[];
   } | null>(null);
   const [showThoughts, setShowThoughts] = useState(false);
   const [showItems, setShowItems] = useState(false);
@@ -219,7 +219,10 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         recentMealsText,
         (msg) => {
           setProgressMsg(msg);
-          if (msg.includes("глубокий анализ")) {
+          // «глубокий анализ» — эскалация по сложности; «умн» — явная просьба
+          // пользователя переключиться на умную модель. Оба случая переводят
+          // индикатор в оранжевый «глубокий» режим.
+          if (msg.includes("глубокий анализ") || msg.includes("умн")) {
             setIsDeepAnalyze(true);
             setLoadingProgress(50);
             currentProgress = 50;
@@ -615,7 +618,14 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
                   {result.items.map((item, idx) => (
                     <div key={idx} className="bg-gray-50 rounded-[12px] p-3 text-xs">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="font-semibold text-gray-800">{item.name}</span>
+                        <span className="font-semibold text-gray-800 flex items-center gap-1.5">
+                          {item.name}
+                          {item.source === 'db' && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-700 bg-emerald-100 rounded-full px-1.5 py-0.5 align-middle">
+                              USDA
+                            </span>
+                          )}
+                        </span>
                         <span className="text-emerald-600 font-medium">{item.calories} ккал</span>
                       </div>
                       <div className="text-gray-500 space-y-0.5">

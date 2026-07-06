@@ -157,7 +157,7 @@ export function ChatScreen({ onBack }: { onBack?: () => void }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-180px)] bg-white rounded-[24px] shadow-[0_0_20px_rgba(0,0,0,0.02)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-220px)] min-h-[420px] bg-white rounded-[24px] shadow-[0_0_20px_rgba(0,0,0,0.02)] overflow-hidden">
       <div className="flex items-center gap-3 p-3 shadow-sm shrink-0 bg-white z-10 relative justify-between">
         <div className="flex items-center gap-2">
           {onBack && (

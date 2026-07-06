@@ -49,6 +49,14 @@ export interface AnalyzedItem {
   fat: number;
   carbs: number;
   breakdown: string;
+  // db_key — английский snake_case термин продукта, который модель возвращает
+  // для lookup во встроенном справочнике КБЖУ (utils/fooddb.ts). Опционально —
+  // модель может не знать точный термин; тогда берётся оценка модели (fallback).
+  db_key?: string;
+  // Источник КБЖУ: 'db' — из справочника USDA (детерминированно), 'model' —
+  // оценка модели. Помечается в utils/ai.ts через enrichItems; используется UI
+  // (бейдж «из базы» в AddMeal) и для отладки hit-rate.
+  source?: 'db' | 'model';
 }
 
 export interface FavoriteMeal {

@@ -2,6 +2,7 @@ import { getAIForSettings, getApiKeyError } from './ai-wrapper';
 import { Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { Settings } from '../types';
 import { MODELS, getModelForMode, ADVANCED_ESCALATION_THRESHOLD } from './models';
+import { enrichItems } from './fooddb';
 
 export async function analyzeMealImage(
   settings: Settings,
@@ -45,6 +46,7 @@ export async function analyzeMealImage(
   • calorie_density — типовая калорийность этого продукта в ккал на 100 г (число, например 250, 90, 520).
   • calories/protein/fat/carbs — КБЖУ именно этой порции (посчитай от плотности и веса; белки/жиры/углеводы — в граммах).
   • breakdown — короткая строка-расчёт: «{вес}г × {плотность} ккал/100г = {итог} ккал» плюс список ключевых ингредиентов и скрытых калорий (масло для жарки ~10 г/порция, соусы, сахар в напитках).
+  • db_key — если это одиночный продукт/ингредиент из встроенной базы, поставь его ключ в snake_case (например: "chicken_breast", "rice_white_cooked", "egg", "oatmeal_cooked", "buckwheat", "banana", "potato", "salmon", "almonds"). Если блюдо смешанное/составное (суп, салат, бургер, плов) или продукта нет в базе — верни пустую строку "". Ключ нужен, чтобы КБЖУ взялись из официальной базы USDA, а не из оценки модели.
 Это заставляет считать системно, а не угадывать сумму.
 
 ШАГ 4 — ИТОГ. Суммируй calories/protein/fat/carbs по всем items — это финальные поля верхнего уровня. Скрытые калории (масло, соусы) добавляй в соответствующий item. КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ добавлять в сумму «Недавние приёмы пищи» — это только контекст.
@@ -126,8 +128,14 @@ export async function analyzeMealImage(
                         fat: { type: Type.NUMBER },
                         carbs: { type: Type.NUMBER },
                         breakdown: { type: Type.STRING },
+                        // Ключ продукта во встроенной базе USDA (fooddb.json).
+                        // Модель его не знает заранее — она возвращает ключ для
+                        // одиночных продуктов, а enrichItems подставляет табличные
+                        // КБЖУ вместо выдуманных моделью. Пустая строка = блюда
+                        // нет в базе, остаётся оценка модели (фолбэк).
+                        db_key: { type: Type.STRING },
                       },
-                      required: ["name", "estimated_weight_g", "portion_basis", "calorie_density", "calories", "protein", "fat", "carbs", "breakdown"],
+                      required: ["name", "estimated_weight_g", "portion_basis", "calorie_density", "calories", "protein", "fat", "carbs", "breakdown", "db_key"],
                 },
               },
             },
@@ -185,22 +193,62 @@ export async function analyzeMealImage(
     }
   };
 
+  // Распознаёт прямую просьбу пользователя переключиться на «умную»/глубокую
+  // модель. Раньше каскад игнорировал такие просьбы и решал только по
+  // confidence_score лёгкой модели — пользователь мог явно попросить
+  // «проанализируй умной моделью», а анализ всё равно шёл на flash-lite.
+  const SMART_REQUEST_RE =
+    /(умн[ао]я|умн[ыо][юе]|поумн|thinking|smart|deep|глубок\w*|продвинут\w*|точн\w* ?анали|точнее|перепровер|внимательн\w*|мощн\w*|сложн\w* ?анали)/i;
+  const forceSmartModel = SMART_REQUEST_RE.test(userInput || "");
+
+  // Дополнительные сигналы сложности из результата лёгкой модели, помимо
+  // confidence_score. Эскалация на thinking-модель нужна не только при низкой
+  // уверенности, но и когда блюд много или вес оценён «на глаз»/по типичной
+  // порции — именно там flash-lite систематически ошибается на 10–30%, хотя
+  // сам себе ставит уверенность 7+. Раньше такие случаи не эскалировались.
+  const assessComplexity = (parsed: any): { complex: boolean; reason: string } => {
+    const items: any[] = Array.isArray(parsed?.items) ? parsed.items : [];
+    if (items.length >= 4) {
+      return { complex: true, reason: 'много блюд в одном приёме' };
+    }
+    const guessBasis = /типичн\w*|на глаз|примерн\w*|без.*ориентир/i;
+    const guessed = items.filter((it) => guessBasis.test(String(it?.portion_basis || '')));
+    if (guessed.length > 0) {
+      return { complex: true, reason: 'вес части блюд оценён по типичной порции' };
+    }
+    return { complex: false, reason: '' };
+  };
+
   let parsedJson: any;
 
-  if (mode === 'advanced') {
+  if (mode === 'advanced' || (mode === 'simple' && forceSmartModel)) {
     // Каскадная маршрутизация по сложности:
     // 1) Дешёвая лёгкая модель (flash-lite) делает первый проход и сама оценивает
     //    уверенность в точности КБЖУ (confidence_score).
-    // 2) Если уверенность ниже порога — задача уходит на мощную thinking-модель.
-    //    Это экономит дорогие вызовы на простых блюдах и держит точность на сложных.
+    // 2) Эскалация на мощную thinking-модель, если сработал хотя бы один сигнал:
+    //    - пользователь явно попросил «умную»/глубокую модель (forceSmartModel);
+    //    - confidence_score ниже порога (лёгкая модель сама не уверена);
+    //    - блюд много (>=4) или вес оценён «на глаз» — assessComplexity.
+    // В simple-режиме каскад включается только при явной просьбе пользователя
+    // (forceSmartModel): обычный simple-запрос остаётся одним проходом flash-lite,
+    // а при «проанализируй умной моделью» он дотягивается до thinking-модели
+    // через тот же NanoGPT-трафик (simple-режим уже имеет nanoApiKey).
     parsedJson = await callModel(MODELS.advancedLite);
     // confidence_score может прийти null/пустым/нечислом — трактуем это как
     // низкую уверенность (0), чтобы такие случаи тоже ушли на эскалацию,
     // а не молча остались с ненадёжным результатом лёгкой модели.
     const conf = Number(parsedJson.confidence_score) || 0;
-    if (conf < ADVANCED_ESCALATION_THRESHOLD) {
+    const complexity = assessComplexity(parsedJson);
+    const escalate = forceSmartModel || conf < ADVANCED_ESCALATION_THRESHOLD || complexity.complex;
+
+    if (escalate) {
+      const reason = forceSmartModel
+        ? 'Подключаю умную модель по вашему запросу...'
+        : complexity.complex
+          ? `Блюдо сложное (${complexity.reason}), подключаю глубокий анализ...`
+          : 'Блюдо сложное, подключаю глубокий анализ...';
       if (onProgress) {
-        onProgress("Блюдо сложное, подключаю глубокий анализ...");
+        onProgress(reason);
       }
       // Заранее сохраняем результат лёгкой модели как надёжный фолбэк на случай,
       // если thinking-модель зависнет. Раньше эскалация шла без таймаута: мощная
@@ -213,27 +261,37 @@ export async function analyzeMealImage(
         parsedJson = await callModelWithTimeout(MODELS.advanced, 60000);
       } catch (escalationErr: any) {
         const msg = String(escalationErr?.message || escalationErr).toLowerCase();
-        const isAbort = escalationErr?.name === "AbortError" || msg.includes("abort") || msg.includes("timeout");
+        const isAbort = escalationErr?.name === 'AbortError' || msg.includes('abort') || msg.includes('timeout');
         if (isAbort) {
-          if (onProgress) onProgress("Глубокий анализ занял слишком долго — берём быстрый результат.");
+          if (onProgress) onProgress('Глубокий анализ занял слишком долго — берём быстрый результат.');
         } else {
           // Сетевая/прочая ошибка эскалации — lite-результат всё равно лучше пустоты.
-          console.warn("Эскалация на thinking-модель провалилась, использую lite-результат.", escalationErr);
+          console.warn('Эскалация на thinking-модель провалилась, использую lite-результат.', escalationErr);
         }
         // parsedJson уже держит lite-результат — оставляем его.
       }
     }
   } else {
-    // free и simple — один вызов соответствующей модели.
+    // free и (simple без явного запроса умной модели) — один вызов соответствующей модели.
     parsedJson = await callModel(getModelForMode(mode));
   }
 
   // Защита от самого частого источника ошибок: модель часто суммирует КБЖУ по
-  // items неточно (ошибается на 10-30%). Если поэлементная разбилка есть и её
+  // items неточно (ошибается на 10-30%). Если поэлементная разбивка есть и её
   // сумма существенно расходится с итоговыми полями верхнего уровня — верим
   // сумме items (она считается из веса × плотность и потому надёжнее), а
   // финальные поля берём из неё. Это повышает итоговую точность.
-  const rawItems: any[] = Array.isArray(parsedJson.items) ? parsedJson.items : [];
+  let rawItems: any[] = Array.isArray(parsedJson.items) ? parsedJson.items : [];
+
+  // Подставляем табличные КБЖУ из встроенной базы USDA (fooddb.json) для
+  // продуктов, которые модель смогла сопоставить с db_key. Это главное
+  // улучшение точности: для распознанного продукта калории/белки/жиры/углеводы
+  // берутся не из головы модели, а из официальных данных USDA, пересчитанных
+  // по весу порции (weight/100 × tabular). Для продуктов без db_key или не
+  // найденных в базе значения модели сохраняются как фолбэк. Поле source
+  // помечает происхождение каждого item ('db' | 'model') — используется в UI
+  // бейджем «из базы».
+  rawItems = enrichItems(rawItems);
   let totals = {
     calories: Number(parsedJson.calories) || 0,
     protein: Number(parsedJson.protein) || 0,
