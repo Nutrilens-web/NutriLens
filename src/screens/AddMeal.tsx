@@ -87,6 +87,10 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isDeepAnalyze, setIsDeepAnalyze] = useState(false);
+  // forceSmart — галочка «Умный анализ». В simple/advanced-режиме форсирует
+  // эскалацию на thinking-модель (глубокий анализ) независимо от confidence.
+  // В free-режиме недоступна (там только одна модель) — скрывается в UI.
+  const [forceSmart, setForceSmart] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -217,6 +221,8 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
         settings.userContext,
         userInput,
         recentMealsText,
+        // forceSmart передаётся в каскад и форсирует эскалацию на thinking-модель
+        // (только в simple/advanced-режиме; в free игнорируется).
         (msg) => {
           setProgressMsg(msg);
           // «глубокий анализ» — эскалация по сложности; «умн» — явная просьба
@@ -227,7 +233,8 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
             setLoadingProgress(50);
             currentProgress = 50;
           }
-        }
+        },
+        forceSmart,
       );
       setLoadingProgress(100);
       setTimeout(() => setResult({ ...aiResult, aiThoughts }), 300);
@@ -425,6 +432,32 @@ export function AddMeal({ onComplete }: { onComplete: () => void }) {
           </div>
 
           </>
+          )}
+
+          {/* Галочка «Умный анализ» — форсирует эскалацию на thinking-модель
+              (глубокий анализ). Имеет смысл только в simple/advanced-режиме,
+              где есть доступ к thinking-модели через NanoGPT. В free-режиме
+              там всего одна модель — галочка бесполезна и скрывается. */}
+          {(settings.apiMode === 'simple' || settings.apiMode === 'advanced') && (
+            <label className="flex items-center gap-2.5 px-1 cursor-pointer select-none">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={forceSmart}
+                onClick={() => setForceSmart((v) => !v)}
+                className={`relative w-10 h-6 rounded-full transition-colors ${forceSmart ? 'bg-orange-500' : 'bg-gray-300'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${forceSmart ? 'translate-x-4' : ''}`}
+                />
+              </button>
+              <span className="text-sm text-gray-700">
+                Умный анализ
+                <span className="block text-[10px] text-gray-400 leading-tight">
+                  Глубокая модель — точнее, но медленнее
+                </span>
+              </span>
+            </label>
           )}
 
           {error && (

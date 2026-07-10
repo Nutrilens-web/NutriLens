@@ -129,8 +129,19 @@ export interface EnrichableItem {
  * Если продукт не найден — ничего не трогает, ставит source = 'model'
  * (caller использует оценку модели как fallback). Это гарантирует, что
  * худший случай = текущее поведение (нет регресса).
+ *
+ * ВАЖНО: справочник — это справочный материал, а не истина в последней
+ * инстанции. Если пользователь явно описал свойства продукта («фарш
+ * нежирный/белковый», «молоко 1.5%», «постная говядина»), модель уже
+ * учла эти уточнения в своих значениях. В таком случае табличные КБЖУ
+ * НЕ подменяют оценку модели — они лишь справка. Параметр
+ * userCustomization (вычисляется caller'ом из userInput) отключает
+ * детерминированную подмену: сохраняется db_key для справки, но
+ * calories/Б/Ж/У остаются от модели. Без этого «фарш белковый,
+ * нежирный» превращается в обычный фарш из базы (Б 20 Ж 17) — ровно
+ * та проблема, против которой это исправление.
  */
-export function enrichItem<T extends EnrichableItem>(item: T): T {
+export function enrichItem<T extends EnrichableItem>(item: T, userCustomization = false): T {
   // Валидация веса: 0, отрицательные или абсурдно большие (>2000 г) значения
   // не enrich'им — оставляем оценку модели. Иначе enrichItem обнулил бы
   // калории при weight=0 или выдал отрицательные при weight<0.
@@ -152,6 +163,16 @@ export function enrichItem<T extends EnrichableItem>(item: T): T {
   if (!entry) {
     return { ...item, source: 'model' as MacroSource };
   }
+
+  // Пользователь явно описал свойства продукта в тексте («фарш белковый,
+  // нежирный», «постная говядина», «молоко 1.5%»). Модель уже учла эти
+  // уточнения. Табличные КБЖУ «обычного» продукта из базы здесь навредят —
+  // подменят уточнённые значения на усреднённые. Сохраняем db_key как
+  // справку (UI может показать «есть в базе»), но КБЖУ оставляем от модели.
+  if (userCustomization) {
+    return { ...item, source: 'model' as MacroSource };
+  }
+
   const weight = rawWeight;
   const factor = weight / 100; // доля от 100 г
   const calories = Math.round(entry.density_kcal_per_100g * factor);
@@ -191,10 +212,18 @@ function looksLikeMixedDish(name: string): boolean {
   return false;
 }
 
-/** Применяет enrichItem к массиву items. Не мутирует исходный массив. */
-export function enrichItems<T extends EnrichableItem>(items: T[] | null | undefined): T[] {
+/**
+ * Применяет enrichItem к массиву items. Не мутирует исходный массив.
+ * userCustomization — если true, для найденных в базе продуктов сохраняются
+ * модельные КБЖУ (модель учла пользовательские уточнения), а табличные
+ * значения не подменяют их. См. enrichItem.
+ */
+export function enrichItems<T extends EnrichableItem>(
+  items: T[] | null | undefined,
+  userCustomization = false,
+): T[] {
   if (!items || !items.length) return items ?? [];
-  return items.map((it) => enrichItem(it));
+  return items.map((it) => enrichItem(it, userCustomization));
 }
 
 /** Доля items, найденных в справочнике — для метрики покрытия/отладки. */
