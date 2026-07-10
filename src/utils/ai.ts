@@ -14,13 +14,28 @@ export async function analyzeMealImage(
   userContext: string,
   userInput: string,
   recentMealsContext: string = "",
-  onProgress?: (msg: string) => void
+  onProgress?: (msg: string) => void,
+  // forceSmart — пользователь явно включил «умный анализ» галочкой в UI.
+  // форсирует эскалацию на thinking-модель независимо от confidence_score
+  // и сложности. Имеет смысл только в advanced/simple-режиме (где есть
+  // доступ к thinking-модели через NanoGPT). В free-режиме игнорируется
+  // (там только одна модель).
+  forceSmart: boolean = false
 ) {
   const mode = settings.apiMode || 'free';
   const keyError = getApiKeyError(settings);
   if (keyError) {
     throw new Error(keyError);
   }
+
+  // userCustomization — признак того, что в userInput есть уточнения о
+  // составе/свойствах продукта, которые должны переопределять табличные КБЖУ
+  // из базы. Например: «фарш нежирный», «постная говядина», «молоко 1.5%»,
+  // «куриная грудка без кожи», «творог 5%». В таких случаях база USDA даёт
+  // усреднённые значения «обычного» продукта, а пользователь описал конкретный
+  // вариант — оценка модели с учётом этого описания точнее. enrichItems с
+  // этим флагом НЕ подменяет КБЖУ модельной оценки табличными.
+  const userCustomization = /\b(постн|нежирн|жирн|обезжирен|белков|молок[аи]\s*\d|творог\s*\d|йогурт\s*\d|кефир\s*\d|сметан[аи]\s*\d|сливк[аи]\s*\d|сыр\s*\d|без\s*кожи|без\s*жира|lean|low.?fat|fat.?free|skim|extra.?lean|%)/i.test(userInput || '');
 
   const prompt = `Ты высокоточный эксперт-диетолог и анализатор еды. Твоя задача — определить КБЖУ (калории, белки, жиры, углеводы) СУММАРНО для ВСЕХ продуктов или блюд, представленных на фотографиях и/или описанных в тексте.
 
@@ -51,6 +66,7 @@ export async function analyzeMealImage(
   • calories/protein/fat/carbs — КБЖУ именно этой порции (посчитай от плотности и веса; белки/жиры/углеводы — в граммах).
   • breakdown — короткая строка-расчёт: «{вес}г × {плотность} ккал/100г = {итог} ккал» плюс список ключевых ингредиентов и скрытых калорий (масло для жарки ~10 г/порция, соусы, сахар в напитках).
   • db_key — если это одиночный продукт/ингредиент из встроенной базы, поставь его ключ ИЗ ПРИВЕДЁННОГО НИЖЕ СПИСКА (точное совпадение). Если блюдо смешанное/составное (суп, салат, бургер, плов, отбивная в панировке, каша с маслом) или продукта нет в списке — верни пустую строку "". Ключ нужен, чтобы КБЖУ взялись из официальной базы USDA, а не из оценки модели.
+  • ВАЖНО про пользовательские уточнения: если пользователь описал конкретные свойства продукта в ЗАПРОСЕ («фарш белковый и нежирный», «постная говядина», «молоко 1.5%», «куриная грудка без кожи»), эти уточнения ИМЕЮТ ПРИОРИТЕТ над табличными значениями базы. База — справочник для «обычного» продукта; если пользователь уточнил жирность/состав, считай КБЖУ исходя из его описания, а не из средних табличных значений. Например, «фарш белковый, с низким содержанием жира» → Б ~24, Ж ~8, а не Б 20, Ж 17 из базы для обычного фарша. В таких случаях всё равно ставь db_key (для справки), но calories/protein/fat/carbs считай по описанию пользователя.
 
 ВАЛИДНЫЕ КЛЮЧИ БАЗЫ (используй ТОЛЬКО из этого списка, иначе lookup не сработает):
 ${FOOD_DB_KEYS.join(', ')}
@@ -228,7 +244,13 @@ ${FOOD_DB_KEYS.join(', ')}
 
   let parsedJson: any;
 
-  if (mode === 'advanced' || (mode === 'simple' && forceSmartModel)) {
+  // forceSmartUI — галочка «Умный анализ» в AddMeal. В simple-режиме форсирует
+  // каскад с эскалацией на thinking-модель (как и forceSmartModel из текста,
+  // но это явное желание пользователя, а не распознанный запрос в userInput).
+  // В free-режиме игнорируется — там нет доступа к thinking-модели.
+  const forceSmartUI = forceSmart && mode !== 'free';
+
+  if (mode === 'advanced' || (mode === 'simple' && (forceSmartModel || forceSmartUI))) {
     // Каскадная маршрутизация по сложности:
     // 1) Дешёвая лёгкая модель (flash-lite) делает первый проход и сама оценивает
     //    уверенность в точности КБЖУ (confidence_score).
@@ -246,10 +268,10 @@ ${FOOD_DB_KEYS.join(', ')}
     // а не молча остались с ненадёжным результатом лёгкой модели.
     const conf = Number(parsedJson.confidence_score) || 0;
     const complexity = assessComplexity(parsedJson);
-    const escalate = forceSmartModel || conf < ADVANCED_ESCALATION_THRESHOLD || complexity.complex;
+    const escalate = forceSmartModel || forceSmartUI || conf < ADVANCED_ESCALATION_THRESHOLD || complexity.complex;
 
     if (escalate) {
-      const reason = forceSmartModel
+      const reason = (forceSmartModel || forceSmartUI)
         ? 'Подключаю умную модель по вашему запросу...'
         : complexity.complex
           ? `Блюдо сложное (${complexity.reason}), подключаю глубокий анализ...`
@@ -298,7 +320,10 @@ ${FOOD_DB_KEYS.join(', ')}
   // найденных в базе значения модели сохраняются как фолбэк. Поле source
   // помечает происхождение каждого item ('db' | 'model') — используется в UI
   // бейджем «из базы».
-  rawItems = enrichItems(rawItems);
+  // userCustomization отключает детерминированную подмену КБЖУ табличными
+  // значениями, когда пользователь описал конкретные свойства продукта —
+  // см. комментарий выше и enrichItem в fooddb.ts.
+  rawItems = enrichItems(rawItems, userCustomization);
   let totals = {
     calories: Number(parsedJson.calories) || 0,
     protein: Number(parsedJson.protein) || 0,
