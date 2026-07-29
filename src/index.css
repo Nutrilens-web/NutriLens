@@ -1,6 +1,95 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ============================================================
+   FRESH — дизайн-токены нового оформления (light + dark).
+   Семантические переменные: переключаются атрибутом data-theme
+   на <html> (см. v2/useFreshTheme.ts). Классика (data-theme=light
+   или его отсутствие) эти токены не использует — она на дефолтной
+   палитре Tailwind, поэтому переключатель дизайна безопасен.
+   ============================================================ */
+:root,
+[data-theme="light"] {
+  --f-canvas: #f5f7f4;          /* фон приложения — мягкий, с зелёным подтоном */
+  --f-surface: #ffffff;         /* карточки */
+  --f-surface-2: #fafcf9;       /* вложенные поверхности, инпуты */
+  --f-ink: #16241c;             /* основной текст — чернильно-зелёный */
+  --f-ink-soft: #55685d;        /* вторичный текст */
+  --f-ink-faint: #8fa196;       /* подписи, плейсхолдеры */
+  --f-accent: #0c9d6b;          /* бренд — глубокий изумруд */
+  --f-accent-strong: #087a53;   /* hover/pressed */
+  --f-accent-soft: #e2f4eb;     /* тонированные подложки акцента */
+  --f-accent-ring: #9fe8cd;     /* лёгкий тонкий ринг/обводка */
+  --f-line: #e5ebe6;            /* разделители, границы */
+  --f-protein: #2f6fd0;         /* макросы — узнаваемые, чуть глубже */
+  --f-fat: #d08700;
+  --f-carbs: #7d5fd6;
+  --f-danger: #d5484f;
+  --f-warn: #d97a1f;
+  --f-shadow-card: 0 1px 2px rgba(22, 36, 28, 0.04), 0 12px 32px -8px rgba(22, 36, 28, 0.1);
+  --f-shadow-soft: 0 1px 2px rgba(22, 36, 28, 0.03), 0 4px 14px -4px rgba(22, 36, 28, 0.07);
+  --f-shadow-lift: 0 2px 4px rgba(22, 36, 28, 0.05), 0 18px 44px -10px rgba(22, 36, 28, 0.16);
+  --f-glow: 0 10px 34px -6px rgba(12, 157, 107, 0.45);
+  --f-ambient-a: rgba(12, 157, 107, 0.13);  /* амбиентные свечения фона */
+  --f-ambient-b: rgba(47, 111, 208, 0.07);
+}
+
+[data-theme="dark"] {
+  --f-canvas: #0e1512;
+  --f-surface: #161f1a;
+  --f-surface-2: #1c2721;
+  --f-ink: #e9f2ec;
+  --f-ink-soft: #9db3a6;
+  --f-ink-faint: #647a6e;
+  --f-accent: #2ec48b;
+  --f-accent-strong: #55d6a6;
+  --f-accent-soft: #12352a;
+  --f-accent-ring: #1d4a3a;
+  --f-line: #233029;
+  --f-protein: #6ba3f2;
+  --f-fat: #ecb14e;
+  --f-carbs: #a98ff0;
+  --f-danger: #ef7076;
+  --f-warn: #f0a04b;
+  --f-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 34px -8px rgba(0, 0, 0, 0.55);
+  --f-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px -4px rgba(0, 0, 0, 0.4);
+  --f-shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.5), 0 20px 48px -10px rgba(0, 0, 0, 0.65);
+  --f-glow: 0 10px 38px -4px rgba(46, 196, 139, 0.4);
+  --f-ambient-a: rgba(46, 196, 139, 0.1);
+  --f-ambient-b: rgba(107, 163, 242, 0.06);
+}
+
+/* Маппинг токенов в утилиты Tailwind v4: bg-canvas, text-ink,
+   border-line, shadow-card, font-display и т.д. `inline` — значения
+   подставляются как var(--f-*), поэтому смена data-theme мгновенно
+   перекрашивает все fresh-компоненты (включая тёмную тему). */
+@theme inline {
+  --color-canvas: var(--f-canvas);
+  --color-surface: var(--f-surface);
+  --color-surface-2: var(--f-surface-2);
+  --color-ink: var(--f-ink);
+  --color-ink-soft: var(--f-ink-soft);
+  --color-ink-faint: var(--f-ink-faint);
+  --color-accent: var(--f-accent);
+  --color-accent-strong: var(--f-accent-strong);
+  --color-accent-soft: var(--f-accent-soft);
+  --color-accent-ring: var(--f-accent-ring);
+  --color-line: var(--f-line);
+  --color-protein: var(--f-protein);
+  --color-fat: var(--f-fat);
+  --color-carbs: var(--f-carbs);
+  --color-danger: var(--f-danger);
+  --color-warn: var(--f-warn);
+
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Golos Text", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: var(--f-shadow-card);
+  --shadow-soft: var(--f-shadow-soft);
+  --shadow-lift: var(--f-shadow-lift);
+  --shadow-glow: var(--f-glow);
+}
+
 @keyframes scan {
   0% { top: 0%; transform: translateY(0); }
   50% { top: 100%; transform: translateY(-100%); }
@@ -21,6 +110,39 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Амбиентный фон fresh-оболочки — только базовый canvas. Живые свечения
+     вынесены в отдельные дрейфующие слои (.fresh-glow-* в FreshShell), чтобы
+     фон «дышал»: два мягких ореола медленно плывут, создавая ощущение глубины
+     и движения вместо статичной заливки. */
+  .fresh-ambient {
+    background: var(--f-canvas);
+  }
+
+  /* Дрейфующие свечения фона. blur + медленный drift = живой, не «аврора-блоб»:
+     монохромные тона акцента, едва заметные, плывут по диагонали. */
+  .fresh-glow {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(70px);
+    pointer-events: none;
+    will-change: transform, opacity;
+    z-index: 0;
+  }
+  .fresh-glow-a {
+    background: var(--f-ambient-a);
+    animation: drift-a 26s ease-in-out infinite alternate;
+  }
+  .fresh-glow-b {
+    background: var(--f-ambient-b);
+    animation: drift-b 32s ease-in-out infinite alternate;
+  }
+
+  /* Табличные цифры для крупных чисел калорий — не «прыгают» при анимации. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
 }
 
 @keyframes shimmer {
@@ -35,7 +157,40 @@
   100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
+/* Пульс FAB во fresh-дизайне — на токене акцента. */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 var(--f-glow), 0 0 0 0 var(--f-ambient-a); }
+  70% { box-shadow: 0 0 0 14px rgba(0, 0, 0, 0), 0 0 0 0 rgba(0, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0), 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+
 @keyframes slide-up {
   from { transform: translate(-50%, 1rem); opacity: 0; }
   to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* Плавное появление fresh-экранов при переключении/навигации. */
+@keyframes fresh-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fresh-in {
+  animation: fresh-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Медленный дрейф амбиентных свечений фона — два слоя плывут в противофазе,
+   фон «дышит». Движение намеренно медленное и плавное, чтобы не отвлекать. */
+@keyframes drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-34px, 28px, 0) scale(1.14); }
+}
+@keyframes drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.06); }
+  100% { transform: translate3d(30px, -24px, 0) scale(0.9); }
+}
+
+/* Мягкое «дыхание» свечения под кольцом прогресса (цель достигнута / перебор). */
+@keyframes ring-breathe {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.07); }
 }

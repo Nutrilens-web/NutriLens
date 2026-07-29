@@ -1,4 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useStore } from './store/useStore';
 import { Dashboard } from './screens/Dashboard';
 import { AddMeal } from './screens/AddMeal';
@@ -15,11 +16,27 @@ import { RecommendationsScreen } from './screens/Recommendations';
 import { Camera, Settings as SettingsIcon, Home, BarChart3, Sparkles, LayoutGrid } from 'lucide-react';
 import { cn } from './utils/cn';
 import { getLocalDateString } from './utils/date';
+// Fresh-дизайн (переключается в Настройках, settings.design). Логика экранов
+// общая, отличается только отрисовка — поэтому классика остаётся нетронутой.
+import { useFreshTheme } from './v2/useFreshTheme';
+import { FreshShell } from './v2/FreshShell';
+import { FreshDashboard } from './v2/FreshDashboard';
+import { FreshAddMeal } from './v2/FreshAddMeal';
+import { FreshSettings } from './v2/FreshSettings';
+import { FreshWater } from './v2/FreshWater';
+import { FreshHub } from './v2/FreshHub';
+import { FreshFridge, FreshMenu } from './v2/FreshPhotoTools';
+import { FreshHabits } from './v2/FreshHabits';
+import { FreshGrocery } from './v2/FreshGrocery';
+import { FreshRecommendations } from './v2/FreshRecommendations';
+import { FreshChat } from './v2/FreshChat';
 
 // Тяжёлые экраны грузим лениво: Stats тянет recharts (~95 КБ gzip),
 // Chat — react-markdown. На старте (Dashboard) они не нужны, поэтому
 // выносим в отдельные chunk'и, которые подгружаются по требованию.
 const StatsScreen = lazy(() => import('./screens/Stats').then(m => ({ default: m.StatsScreen })));
+// Fresh-версия Отчёта — тоже лениво (recharts в отдельном чанке).
+const LazyFreshStats = lazy(() => import('./v2/FreshStats').then(m => ({ default: m.FreshStats })));
 
 // Простая заглушка-спиннер на время подгрузки ленивого чанка.
 function ScreenLoader() {
@@ -55,6 +72,11 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const { meals } = useStore();
 
+  // Ставит data-theme на <html> (авто по системе) и возвращает активный дизайн.
+  // Вызывается до рендера, чтобы первая отрисовка была в правильной теме.
+  const design = useFreshTheme();
+  const isFresh = design === 'fresh';
+
   const todayDateStr = getLocalDateString();
   const todayMealsCount = meals.filter(m => m.date === todayDateStr).length;
   const shouldPulseFAB = todayMealsCount === 0;
@@ -64,22 +86,62 @@ export default function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'dashboard': return <Dashboard />;
-      case 'add': return <AddMeal onComplete={() => setCurrentScreen('dashboard')} />;
-      case 'settings': return <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />;
-      case 'stats': return <StatsScreen />;
-      case 'assistant': return <AssistantScreen />;
-      case 'more': return <MoreScreen onNavigate={setCurrentScreen} />;
-      case 'water': return <WaterTrackerScreen onBack={goBack} />;
-      case 'fridge': return <FridgeScannerScreen onBack={goBack} />;
-      case 'grocery': return <GroceryScreen onBack={goBack} />;
-      case 'habits': return <HabitAnalyzerScreen onBack={goBack} />;
-      case 'menu': return <MenuAnalyzerScreen onBack={goBack} />;
-      case 'recommendations': return <RecommendationsScreen onBack={goBack} />;
-      case 'chat': return <ChatScreen onBack={goBack} />;
-      default: return <Dashboard />;
+      // Dashboard и AddMeal имеют fresh-версии; остальные экраны пока
+      // рендерятся классикой внутри fresh-оболочки (конвертируем позже).
+      case 'dashboard': return isFresh ? <FreshDashboard onAddMeal={() => setCurrentScreen('add')} /> : <Dashboard />;
+      case 'add': return isFresh
+        ? <FreshAddMeal onComplete={() => setCurrentScreen('dashboard')} />
+        : <AddMeal onComplete={() => setCurrentScreen('dashboard')} />;
+      case 'settings': return isFresh
+        ? <FreshSettings onBack={() => setCurrentScreen('dashboard')} />
+        : <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />;
+      case 'stats': return isFresh ? <LazyFreshStats /> : <StatsScreen />;
+      case 'assistant': return isFresh
+        ? <FreshHub onNavigate={setCurrentScreen} title="Ассистент" icon={Sparkles} />
+        : <AssistantScreen />;
+      case 'more': return isFresh
+        ? <FreshHub onNavigate={setCurrentScreen} title="Инструменты" icon={LayoutGrid} />
+        : <MoreScreen onNavigate={setCurrentScreen} />;
+      case 'water': return isFresh ? <FreshWater onBack={goBack} /> : <WaterTrackerScreen onBack={goBack} />;
+      case 'fridge': return isFresh ? <FreshFridge onBack={goBack} /> : <FridgeScannerScreen onBack={goBack} />;
+      case 'grocery': return isFresh ? <FreshGrocery onBack={goBack} /> : <GroceryScreen onBack={goBack} />;
+      case 'habits': return isFresh ? <FreshHabits onBack={goBack} /> : <HabitAnalyzerScreen onBack={goBack} />;
+      case 'menu': return isFresh ? <FreshMenu onBack={goBack} /> : <MenuAnalyzerScreen onBack={goBack} />;
+      case 'recommendations': return isFresh ? <FreshRecommendations onBack={goBack} /> : <RecommendationsScreen onBack={goBack} />;
+      case 'chat': return isFresh ? <FreshChat onBack={goBack} /> : <ChatScreen onBack={goBack} />;
+      default: return isFresh ? <FreshDashboard onAddMeal={() => setCurrentScreen('add')} /> : <Dashboard />;
     }
   };
+
+  const screen = (
+    <Suspense fallback={<ScreenLoader />}>
+      {renderScreen()}
+    </Suspense>
+  );
+
+  // Fresh-оболочка: амбиентный фон, шапка с вордмарком, плавающий док.
+  // Переходы между экранами — slide/fade через AnimatePresence (key по экрану).
+  if (isFresh) {
+    return (
+      <FreshShell
+        currentScreen={currentScreen}
+        onNavigate={setCurrentScreen}
+        shouldPulseFAB={shouldPulseFAB}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentScreen}
+            initial={{ opacity: 0, x: 14 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {screen}
+          </motion.div>
+        </AnimatePresence>
+      </FreshShell>
+    );
+  }
 
   return (
     // Mobile-app shell: фиксированная по высоте колонка, где header и нижняя

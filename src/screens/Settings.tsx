@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { ArrowLeft, Trash2, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Trash2, Download, Upload, Palette, Sparkles } from 'lucide-react';
 import { getLocalDateString } from '../utils/date';
+import { cn } from '../utils/cn';
 
 export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const { settings, setSettings } = useStore();
@@ -13,6 +14,15 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
   const handleSave = () => {
     setSettings(localSettings);
     onBack();
+  };
+
+  // Дизайн применяется СРАЗУ (мгновенный предпросмотр), минуя кнопку «Сохранить»:
+  // пишем в стор и синхронизируем localSettings, чтобы последующее сохранение
+  // остальных настроек не откатило выбор оформления.
+  const design: 'classic' | 'fresh' = settings.design === 'fresh' ? 'fresh' : 'classic';
+  const setDesign = (d: 'classic' | 'fresh') => {
+    setSettings({ ...settings, design: d });
+    setLocalSettings((prev) => ({ ...prev, design: d }));
   };
 
   const handleClearData = () => {
@@ -76,6 +86,43 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <h2 className="text-xl font-semibold text-gray-900">Настройки</h2>
+      </div>
+
+      {/* Оформление — переключатель дизайна. Применяется мгновенно. */}
+      <div className="bg-white rounded-[20px] p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <Palette className="w-4 h-4 text-emerald-500" />
+          <h3 className="text-sm font-medium text-gray-700">Оформление</h3>
+        </div>
+        <p className="text-[10px] text-gray-400 mb-4">
+          Новый дизайн — экспериментальный. Тёмная тема включается автоматически по настройке системы.
+        </p>
+        <div className="grid grid-cols-2 gap-2 p-1 bg-gray-50 rounded-[14px]">
+          <button
+            onClick={() => setDesign('classic')}
+            className={cn(
+              'flex flex-col items-center gap-1 py-3 rounded-[10px] text-xs font-medium transition-all',
+              design === 'classic'
+                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700',
+            )}
+          >
+            <span className="text-base">🌿</span>
+            Классический
+          </button>
+          <button
+            onClick={() => setDesign('fresh')}
+            className={cn(
+              'flex flex-col items-center gap-1 py-3 rounded-[10px] text-xs font-medium transition-all',
+              design === 'fresh'
+                ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-200'
+                : 'text-gray-500 hover:text-gray-700',
+            )}
+          >
+            <Sparkles className="w-4 h-4 mx-auto" />
+            Новый дизайн
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[20px] p-5 shadow-sm space-y-5">

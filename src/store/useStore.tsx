@@ -8,6 +8,7 @@ const WEIGHTS_KEY = 'nutrilens_weights';
 const GROCERY_KEY = 'nutrilens_grocery';
 const GROCERY_CHECKED_KEY = 'nutrilens_grocery_checked';
 const CHAT_HISTORY_KEY = 'nutrilens_chat_history';
+const WATER_KEY = 'nutrilens_water';
 
 const defaultSettings: Settings = {
   apiKey: '',
@@ -15,6 +16,8 @@ const defaultSettings: Settings = {
   dailyGoal: 2000,
   userContext: 'Я мужчина, 85 кг, жарю на 5г масла',
   apiMode: 'free',
+  // 'classic' — исходный дизайн. 'fresh' включается пользователем в Настройках.
+  design: 'classic',
   // Пустые строки = прямое подключение к API без прокси.
   // Логика в ai-wrapper.ts / fallback.ts трактует пустое значение как falsy.
   nanoApiEndpoint: '',
@@ -61,6 +64,10 @@ interface StoreValue {
   groceryData: { plan: string, categories: { category: string, items: string[] }[] } | null;
   groceryCheckedItems: string[];
   chatHistory: ChatMessage[];
+  // Выпитая вода по датам: { 'YYYY-MM-DD': миллилитры }. Раньше трекер воды
+  // жил только в локальном state экрана и сбрасывался при уходе — теперь
+  // сохраняется (QoL-фикс в fresh-дизайне).
+  water: Record<string, number>;
   addMeal: (meal: Meal) => void;
   updateMeal: (id: string, updates: Partial<Meal>) => void;
   deleteMeal: (id: string) => void;
@@ -71,6 +78,7 @@ interface StoreValue {
   toggleGroceryCheckedItem: (item: string) => void;
   saveChatHistory: (history: ChatMessage[]) => void;
   clearChatHistory: () => void;
+  setWater: (date: string, ml: number) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -100,6 +108,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const [chatHistory, setChatHistoryState] = useState<ChatMessage[]>(() =>
     loadJSON<ChatMessage[]>(CHAT_HISTORY_KEY, INITIAL_CHAT),
+  );
+
+  const [water, setWaterState] = useState<Record<string, number>>(() =>
+    loadJSON<Record<string, number>>(WATER_KEY, {}),
   );
 
   const setSettings = useCallback((newSettings: Settings) => {
@@ -280,6 +292,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     saveJSON(CHAT_HISTORY_KEY, INITIAL_CHAT);
   }, []);
 
+  const setWater = useCallback((date: string, ml: number) => {
+    setWaterState((prev) => {
+      const updated = { ...prev, [date]: Math.max(0, ml) };
+      saveJSON(WATER_KEY, updated);
+      return updated;
+    });
+  }, []);
+
   const value = useMemo<StoreValue>(
     () => ({
       settings,
@@ -290,6 +310,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       groceryData,
       groceryCheckedItems,
       chatHistory,
+      water,
       addMeal,
       updateMeal,
       deleteMeal,
@@ -300,6 +321,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleGroceryCheckedItem,
       saveChatHistory,
       clearChatHistory,
+      setWater,
     }),
     [
       settings,
@@ -309,6 +331,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       groceryData,
       groceryCheckedItems,
       chatHistory,
+      water,
     ],
   );
 

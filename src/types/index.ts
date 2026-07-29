@@ -7,6 +7,10 @@ export interface Settings {
   fatGoal?: number;
   carbsGoal?: number;
   apiMode?: 'free' | 'simple' | 'advanced';
+  // Дизайн интерфейса: 'classic' — исходное оформление, 'fresh' — новое
+  // (дизайн-токены, Manrope/Golos, авто-тёмная тема по системе).
+  // По умолчанию 'classic' — переключение добровольное в Настройках.
+  design?: 'classic' | 'fresh';
   // Кастомный URL прокси/эндпоинта для обхода региональных блокировок.
   // Если пусто — используются дефолтные адреса (nano-gpt.com / Google).
   nanoApiEndpoint?: string;
