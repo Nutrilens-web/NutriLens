@@ -25,6 +25,7 @@ import { FreshAddMeal } from './v2/FreshAddMeal';
 import { FreshSettings } from './v2/FreshSettings';
 import { FreshWater } from './v2/FreshWater';
 import { FreshHub } from './v2/FreshHub';
+import { FreshAssistant } from './v2/FreshAssistant';
 import { FreshFridge, FreshMenu } from './v2/FreshPhotoTools';
 import { FreshHabits } from './v2/FreshHabits';
 import { FreshGrocery } from './v2/FreshGrocery';
@@ -97,7 +98,7 @@ export default function App() {
         : <SettingsScreen onBack={() => setCurrentScreen('dashboard')} />;
       case 'stats': return isFresh ? <LazyFreshStats /> : <StatsScreen />;
       case 'assistant': return isFresh
-        ? <FreshHub onNavigate={setCurrentScreen} title="Ассистент" icon={Sparkles} />
+        ? <FreshAssistant onNavigate={setCurrentScreen} />
         : <AssistantScreen />;
       case 'more': return isFresh
         ? <FreshHub onNavigate={setCurrentScreen} title="Инструменты" icon={LayoutGrid} />

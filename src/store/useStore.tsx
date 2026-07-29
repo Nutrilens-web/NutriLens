@@ -9,6 +9,8 @@ const GROCERY_KEY = 'nutrilens_grocery';
 const GROCERY_CHECKED_KEY = 'nutrilens_grocery_checked';
 const CHAT_HISTORY_KEY = 'nutrilens_chat_history';
 const WATER_KEY = 'nutrilens_water';
+const WORKOUTS_KEY = 'nutrilens_workouts';
+const HABITS_LOG_KEY = 'nutrilens_habits_log';
 
 const defaultSettings: Settings = {
   apiKey: '',
@@ -68,6 +70,12 @@ interface StoreValue {
   // жил только в локальном state экрана и сбрасывался при уходе — теперь
   // сохраняется (QoL-фикс в fresh-дизайне).
   water: Record<string, number>;
+  // Тренировочные дни по датам: { 'YYYY-MM-DD': true }. Используется умным
+  // ассистентом для повышения нормы воды и рекомендаций по БЖУ под нагрузку.
+  workouts: Record<string, boolean>;
+  // Отмеченные привычки по датам: { 'YYYY-MM-DD': string[] id привычек }.
+  // Чеклист привычек дня в умном ассистенте (создаёт ежедневный ритуал).
+  habitsLog: Record<string, string[]>;
   addMeal: (meal: Meal) => void;
   updateMeal: (id: string, updates: Partial<Meal>) => void;
   deleteMeal: (id: string) => void;
@@ -79,6 +87,8 @@ interface StoreValue {
   saveChatHistory: (history: ChatMessage[]) => void;
   clearChatHistory: () => void;
   setWater: (date: string, ml: number) => void;
+  setWorkout: (date: string, on: boolean) => void;
+  toggleHabit: (date: string, habitId: string) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -112,6 +122,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const [water, setWaterState] = useState<Record<string, number>>(() =>
     loadJSON<Record<string, number>>(WATER_KEY, {}),
+  );
+
+  const [workouts, setWorkoutsState] = useState<Record<string, boolean>>(() =>
+    loadJSON<Record<string, boolean>>(WORKOUTS_KEY, {}),
+  );
+
+  const [habitsLog, setHabitsLogState] = useState<Record<string, string[]>>(() =>
+    loadJSON<Record<string, string[]>>(HABITS_LOG_KEY, {}),
   );
 
   const setSettings = useCallback((newSettings: Settings) => {
@@ -300,6 +318,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setWorkout = useCallback((date: string, on: boolean) => {
+    setWorkoutsState((prev) => {
+      const updated = { ...prev, [date]: on };
+      saveJSON(WORKOUTS_KEY, updated);
+      return updated;
+    });
+  }, []);
+
+  const toggleHabit = useCallback((date: string, habitId: string) => {
+    setHabitsLogState((prev) => {
+      const current = prev[date] || [];
+      const next = current.includes(habitId)
+        ? current.filter((h) => h !== habitId)
+        : [...current, habitId];
+      const updated = { ...prev, [date]: next };
+      saveJSON(HABITS_LOG_KEY, updated);
+      return updated;
+    });
+  }, []);
+
   const value = useMemo<StoreValue>(
     () => ({
       settings,
@@ -311,6 +349,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       groceryCheckedItems,
       chatHistory,
       water,
+      workouts,
+      habitsLog,
       addMeal,
       updateMeal,
       deleteMeal,
@@ -322,6 +362,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       saveChatHistory,
       clearChatHistory,
       setWater,
+      setWorkout,
+      toggleHabit,
     }),
     [
       settings,
@@ -332,6 +374,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       groceryCheckedItems,
       chatHistory,
       water,
+      workouts,
+      habitsLog,
     ],
   );
 
